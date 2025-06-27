@@ -28,7 +28,7 @@ A simple Jupyter kernel for the Odin programming language. The main things work,
 
 Requirements:
 - Make installed.
-- Odin version `>=dev-2025-04, <=dev-2025-06` installed.
+- Odin version `>=dev-2025-02, <=dev-2025-06` installed.
 - Python version `>=3.12` installed.
 - PIP or Poetry installed.
 
