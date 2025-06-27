@@ -11,9 +11,11 @@ A simple Jupyter kernel for the Odin programming language. The main things work,
 
 <!-- An environment for programming Odin interactively. Compiles chunks of Odin code, loads them dynamically, and links them seamlessly. Comprised of a REPL interpreter and a Jupyter kernel. -->
 
+<!---
 <h2 align="center">Showcase</h2>
 
 <img alt="showcase gif" src="/docs/showcase.gif" width="100%">
+--->
 
 <!--
 <h2 align="center">Features</h2>
@@ -75,23 +77,13 @@ poetry -C=./src/ipy_kernel run jupyter console --kernel jodin
 To start with the notebook front-end:
 
 ```
-jupyter notebook examples/display.ipynb
+jupyter notebook
 ```
 
 To start with the notebook front-end using Poetry python:
 ```
-poetry -C=./src/ipy_kernel run jupyter notebook ../../examples/display.ipynb
+poetry -C=./src/ipy_kernel run jupyter notebook
 ```
 
 Once in notebook, to select the JOdin kernel go to `Kernel > Change Kernel...` and select `JODIN`.
-
-<h2 align="center">Example Notebooks</h2>
-
-You can start a notebook by appending its path to the command that starts the notebook front-end.
-
-- `./examples/demo.ipynb` — The Odin demo example, ported to a jupyter notebook.
-- `./examples/messaging.ipynb` — Showcases the low-level messaging API for communicating with the front-end.
-- `./examples/display.ipynb` — Showcases the high-level display API for rendering various kinds of data in the front-end.
-- `./examples/raylib.ipynb` — Showcases how JOdin can be used for live game programming.
-- `./examples/errors.ipynb` — Showcases the different kinds of errors you may encounter while programming in JOdin.
 
