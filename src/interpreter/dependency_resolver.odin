@@ -1,3 +1,4 @@
+#+private
 package jodin
 import "core:fmt"
 
@@ -45,4 +46,8 @@ deprule_proc_type_change:: proc(cell_A, cell_B: ^Cell) -> (weak, strong: bool) {
 	// A proc is defined in cell B and used in cell A. If the type of the proc is changed and cell B is recompiled, cell A must
 	// also be recompiled.
 	return weak, strong }
+
+
+cell_free_all:: proc(cell: ^Cell) {
+	free_all(cell.cell_context.allocator) }
 

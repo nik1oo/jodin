@@ -1,3 +1,4 @@
+#+private
 package jodin
 import "base:runtime"
 import "core:reflect"
@@ -67,8 +68,4 @@ assert_handler_from_tokenizer_pos:: proc(condition: bool, err: Error, loc: token
 
 source_code_location_from_tokenizer_pos:: proc(pos: tokenizer.Pos) -> runtime.Source_Code_Location {
 	return runtime.Source_Code_Location{ file_path = pos.file, line = auto_cast pos.line, column = auto_cast pos.column } }
-
-
-noerr:: proc(err: Error) -> bool {
-	return err == NOERR }
 

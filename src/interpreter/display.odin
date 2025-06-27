@@ -10,7 +10,9 @@ Audio_Format:: enum u8 {
 	MP3,
 	WAV,
 	WEBM }
-@(rodata) @(private) AUDIO_MIME_TYPES:= [?]string{
+@(private)
+@(rodata)
+AUDIO_MIME_TYPES:= [?]string{
 	Audio_Format.AAC  = "audio/aac",
 	Audio_Format.MP3  = "audio/mpeg",
 	Audio_Format.WAV  = "audio/wav",
@@ -28,7 +30,9 @@ Image_Format:: enum u8 {
 	JPEG,
 	GIF,
 	WEBP }
-@(rodata) @(private) IMAGE_MIME_TYPES:= [?]string{
+@(private)
+@(rodata)
+IMAGE_MIME_TYPES:= [?]string{
 	Image_Format.PNG  = "image/png",
 	Image_Format.JPEG = "image/jpeg",
 	Image_Format.GIF  = "image/gif",
