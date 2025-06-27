@@ -7,7 +7,7 @@
 	<h1 align="center"><b>jodin</b></h1>
 </p>
 
-A simple Jupyter kernel for the Odin programming language. The main things work, but there's still a lot of bugs. Only works on Windows, as of now.
+A simple Jupyter kernel for the Odin programming language. The main things work, but there are still many bugs. Only works on Windows, as of now.
 
 <!-- An environment for programming Odin interactively. Compiles chunks of Odin code, loads them dynamically, and links them seamlessly. Comprised of a REPL interpreter and a Jupyter kernel. -->
 
