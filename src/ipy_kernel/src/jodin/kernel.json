@@ -1,0 +1,7 @@
+{
+	"argv": ["python","-m","jodin", "-f", "{connection_file}"],
+	"display_name":"JODIN",
+    "mimetype": "text/odin",
+    "language": "odin",
+    "name": "jodin"
+}

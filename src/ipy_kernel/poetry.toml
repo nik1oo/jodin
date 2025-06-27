@@ -1,0 +1,6 @@
+[virtualenvs]
+create = true
+use-poetry-python = true
+
+[virtualenvs.options]
+no-pip = true
