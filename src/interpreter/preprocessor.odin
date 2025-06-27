@@ -88,7 +88,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	fmt.eprintln("Starting preprocessing.")
 	defer fmt.println("Exiting preprocessor.")
 
-	sb:=                            strings.builder_make_len_cap(0, 64 * mem.Kilobyte)
+	sb:=                            strings.builder_make_len_cap(0, 1 * mem.Megabyte)
 	file_tags:=                     strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
 	package_directive_stmts:=       strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
 	global_constant_stmts:=         strings.builder_make_len_cap(0, 4 * mem.Kilobyte)

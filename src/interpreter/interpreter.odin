@@ -31,21 +31,21 @@ Procedure:: struct { name: string, type: string, value: string }
 
 // INTERPRETER SESSION //
 Session:: struct {
-	name:                string,
-	cells:               map[string]^Cell,
-	dir:                 string, // TODO Get this from the client. //
-	os_stdout:           os.Handle,
-	os_stderr:           os.Handle,
-	stream_in:           io.Stream,
-	stream_out:          io.Stream,
-	stdout_pipe:         internal_pipe.Internal_Pipe,
-	stderr_pipe:         internal_pipe.Internal_Pipe,
-	kernel_source_pipe:  external_pipe.External_Pipe,
-	kernel_stdout_pipe:  external_pipe.External_Pipe,
-	kernel_iopub_pipe:   external_pipe.External_Pipe,
-	temp_folder:         string,
-	temp_folder_handle:  os.Handle,
-	__symmap__:          map[string]rawptr }
+	name:                           string,
+	cells:                          map[string]^Cell,
+	dir:                            string, // TODO Get this from the client. //
+	os_stdout:                      os.Handle,
+	os_stderr:                      os.Handle,
+	stream_in:                      io.Stream,
+	stream_out:                     io.Stream,
+	stdout_pipe:                    internal_pipe.Internal_Pipe,
+	stderr_pipe:                    internal_pipe.Internal_Pipe,
+	kernel_source_pipe:             external_pipe.External_Pipe,
+	kernel_stdout_pipe:             external_pipe.External_Pipe,
+	kernel_iopub_pipe:              external_pipe.External_Pipe,
+	session_temp_directory:         string,
+	session_temp_directory_handle:  os.Handle,
+	__symmap__:                     map[string]rawptr }
 
 
 Cell_State:: struct {
@@ -118,9 +118,9 @@ init_cell:: proc(cell: ^Cell, cell_id: string, code_raw: string, index: uint = 0
 	session: = cell.session
 	cell.id = strings.clone(cell_id)
 	cell.name = fmt.aprintf("cell_%s_%d", time_string(), index)
-	cell.package_filepath = filepath.join({session.temp_folder, fmt.aprintf("%s", cell.name)})
-	cell.source_filepath = filepath.join({session.temp_folder, cell.name, fmt.aprintf("%s.odin", cell.name)})
-	cell.dll_filepath = filepath.join({session.temp_folder, cell.name, fmt.aprintf("%s.dll", cell.name)})
+	cell.package_filepath = filepath.join({session.session_temp_directory, fmt.aprintf("%s", cell.name)})
+	cell.source_filepath = filepath.join({session.session_temp_directory, cell.name, fmt.aprintf("%s.odin", cell.name)})
+	cell.dll_filepath = filepath.join({session.session_temp_directory, cell.name, fmt.aprintf("%s.dll", cell.name)})
 	cell.code_raw = code_raw
 	cell.loaded = false
 	cell.cell_context = runtime.default_context()
@@ -173,14 +173,15 @@ start_session:: proc(session: ^Session) -> (err: Error) {
 	context.logger = log.create_console_logger()
 	session.cells = make(map[string]^Cell)
 	session.__symmap__ = make(map[string]rawptr)
-	temp_folder: = filepath.join({get_temp_path(), "jodin"})
-	if ! os.exists(temp_folder) {
-		err = os.Error(os.make_directory(temp_folder, os.O_RDWR))
-		if err != os.Error(os.General_Error.None) do return error_handler(err, "Couldn't create temp folder %s.", temp_folder) }
-	session.temp_folder = filepath.join({temp_folder, session.name})
-	if ! os.exists(session.temp_folder) do fmt.assertf(os.make_directory(session.temp_folder, os.O_RDWR) == os.General_Error.None, "Couldn't create temp folder %s.", session.temp_folder)
-	session.temp_folder_handle, err = os.open(session.temp_folder)
-	if err != os.Error(os.General_Error.None) do return error_handler(err, "Couldn't open temp folder %s.", session.temp_folder_handle)
+	temp_directory: = get_temp_directory()
+	if ! os.exists(temp_directory) do os.make_directory(temp_directory, os.O_RDWR)
+	session.session_temp_directory = filepath.join({temp_directory, session.name})
+	fmt.println("SESSION TEMP FOLDER:", session.session_temp_directory)
+	if ! os.exists(session.session_temp_directory) {
+		err = os.Error(os.make_directory(session.session_temp_directory, os.O_RDWR))
+		if err != os.Error(os.General_Error.None) do return error_handler(err, "Couldn't create temp folder %s.", session.session_temp_directory) }
+	session.session_temp_directory_handle, err = os.open(session.session_temp_directory)
+	if err != os.Error(os.General_Error.None) do return error_handler(err, "Couldn't open temp folder %s.", session.session_temp_directory_handle)
 	return NOERR }
 
 
@@ -207,15 +208,6 @@ read_cell_iopub:: proc(cell: ^Cell) -> (out_string: string, err: Error) {
 
 
 end_session:: proc(session: ^Session) -> (err: Error) {
-	file_infos: []os.File_Info; file_infos, err = os.read_dir(session.temp_folder_handle, -1)
-	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not read temp dir %s.", session.temp_folder_handle)
-	for file_info in file_infos {
-		source_name: = filepath.join({session.temp_folder, file_info.name, fmt.aprintf("%s.odin", file_info.name)})
-		dll_name: = filepath.join({session.temp_folder, file_info.name, fmt.aprintf("%s.dll", file_info.name)})
-		os.remove(source_name)
-		os.remove(dll_name)
-		os.remove_directory(filepath.join({session.temp_folder, fmt.aprintf("%s", file_info.name)})) }
-	os.remove_directory(session.temp_folder)
 	disconnect_from_ipy_kernel(session)
 	return NOERR }
 
@@ -228,7 +220,7 @@ write_dll:: proc(cell: ^Cell) -> (err: Error) {
 
 
 compile_dll:: proc(cell: ^Cell) -> (err: Error) {
-	build_log_filepath: = filepath.join({ cell.session.temp_folder, "build_log.txt" })
+	build_log_filepath: = filepath.join({ cell.session.session_temp_directory, "build_log.txt" })
 	build_command: = fmt.caprintf(`%s build %s %s -file -build-mode:dll -out:%s -linker:lld > "%s" 2>&1`, cell.tags.odin_path, cell.source_filepath, cell.tags.build_args, cell.dll_filepath, build_log_filepath)
 	fmt.eprintln("build command:", build_command)
 	status: = libc.system(build_command)

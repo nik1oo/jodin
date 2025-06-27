@@ -5,6 +5,8 @@ import platform
 import time
 import subprocess
 import struct
+import tempfile
+import shutil
 import pexpect
 import pexpect.popen_spawn
 import pexpect.replwrap
@@ -26,6 +28,20 @@ def get_odin_root():
     p = pexpect.popen_spawn.PopenSpawn('odin root')
     p.expect(pexpect.EOF)
     return str(p.before)[2:-1]
+# def clear_directory(path):
+# 	if ! os.exists(path) do return NOERR
+# 	if ! os.is_dir(path) do return os.remove(path)
+# 	handle: os.Handle
+# 	handle, err = os.open(path)
+# 	if err != NOERR do return err
+# 	fi: []os.File_Info
+# 	fi, err = os.read_dir(handle, 100)
+# 	fmt.println("Deleting", path)
+# 	for f in fi {
+# 		clear_directory(f.fullpath) }
+# 	err = os.remove_directory(path)
+# 	if err != NOERR do return error_handler(err, "Could not delete %s", path)
+# 	return NOERR }
 # def get_temp_path():
 #     os = platform.system()
 #     if os == 'Windows':
@@ -80,7 +96,11 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
         super().__init__(**kwargs)
         redirected_stdout = sys.stdout
         sys.stdout = sys.__stdout__
-        print_and_flush("__init__ begin")
+        # print_and_flush("Temp dir:")
+        # print_and_flush(tempfile.gettempdir())
+        print_and_flush("CWD:", os.getcwd())
+        temp_directory = os.getcwd() + r"\temp"
+        if os.path.exists(temp_directory): shutil.rmtree(temp_directory)
         self.interpreter_path = 'jodin.exe'
         subprocess.Popen(self.interpreter_path)
         self.connect_to_server()

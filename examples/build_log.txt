@@ -1,0 +1,9 @@
+C:/Code/jodin/examples/cell_15_53_24_3/cell_15_53_24_3.odin(46:2) Syntax Error: Failed to parse file: C:/Code/jodin/examples/cell_15_53_24_3/cell_15_53_24_3; invalid token found in file 
+	ð6\ü 
+	^ 
+C:/Code/jodin/examples/cell_15_53_24_3/cell_15_53_24_3.odin(46:1) Syntax Error: Illegal UTF-8 encoding 
+	ð6\ü 
+	^ 
+C:/Code/jodin/examples/cell_15_53_24_3/cell_15_53_24_3.odin(46:3) Syntax Error: Illegal character: ï¿½ (65533) 
+	ð6\ü 
+	^ 

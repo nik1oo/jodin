@@ -62,20 +62,41 @@ windows_get_last_error:: proc() -> windows.System_Error {
 	return auto_cast windows.GetLastError() }
 
 
-get_temp_path:: proc() -> string {
-	path: string
-	when ODIN_OS == .Windows {
-		buffer_u16: []u16 = make([]u16, 256)
-		buffer_u8:  []u8  = make([]u8, 256)
-		n16: = windows.GetTempPathW(256, auto_cast &buffer_u16[0])
-		assert(n16 > 0)
-		n8: = utf16.decode_to_utf8(buffer_u8, buffer_u16[0:n16])
-		assert(n8 == int(n16))
-		path = string(buffer_u8[0:n8]) }
-	else when ODIN_OS == Linux {
-		path = "/tmp" }
-	assert(os.exists(path))
-	return path }
+get_temp_directory:: proc() -> string {
+	return filepath.join({os.get_current_directory(), "temp"}) }
+	// path: string
+	// when ODIN_OS == .Windows {
+	// 	buffer_u16: []u16 = make([]u16, 256)
+	// 	buffer_u8:  []u8  = make([]u8, 256)
+	// 	n16: = windows.GetTempPathW(256, auto_cast &buffer_u16[0])
+	// 	assert(n16 > 0)
+	// 	n8: = utf16.decode_to_utf8(buffer_u8, buffer_u16[0:n16])
+	// 	assert(n8 == int(n16))
+	// 	path = string(buffer_u8[0:n8]) }
+	// else when ODIN_OS == Linux {
+	// 	path = "/tmp" }
+	// assert(os.exists(path))
+	// return path }
+
+
+clear_directory:: proc(path: string) -> (err: Error) {
+	fmt.println("Clearing", path)
+	if ! os.exists(path) do return NOERR
+	if ! os.is_dir(path) do return os.remove(path)
+	handle: os.Handle
+	handle, err = os.open(path)
+	if err != NOERR do return err
+	fi: []os.File_Info
+	fi, err = os.read_dir(handle, 100)
+	fmt.println("Deleting", path)
+	for f in fi {
+		clear_directory(f.fullpath) }
+	err = os.remove_directory(path)
+	if err != NOERR do return error_handler(err, "Could not delete %s", path)
+	return NOERR }
+
+
+// TODO Use os.get_current_directory and set it to __dir__ //
 
 
 time_string:: proc() -> string {
