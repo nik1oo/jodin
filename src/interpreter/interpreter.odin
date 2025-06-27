@@ -33,7 +33,6 @@ Procedure:: struct { name: string, type: string, value: string }
 Session:: struct {
 	name:                           string,
 	cells:                          map[string]^Cell,
-	dir:                            string, // TODO Get this from the client. //
 	os_stdout:                      os.Handle,
 	os_stderr:                      os.Handle,
 	stream_in:                      io.Stream,
@@ -49,7 +48,6 @@ Session:: struct {
 
 
 Cell_State:: struct {
-	// TODO Figure out if I can use double-export (@(export) in two cells on the same variable) to make them share the same data.
 	package_directives: [dynamic]string,   // immediately before package declaration
 	global_constants:   [dynamic]string,   // before __main__, copied to other cells
 	global_variables:   [dynamic]Variable, // before __main__, linked to other cells
@@ -104,7 +102,7 @@ cell_free_all:: proc(cell: ^Cell) {
 
 write_to_stdout_pipe:: proc(session: ^Session, message: string) -> (err: Error) {
 	message: = message
-	if message == "" do message = " " // TODO Change to \n
+	if message == "" do message = " "
 	return external_pipe.write_string(&session.kernel_stdout_pipe, message, PIPE_TIMEOUT, PIPE_DELAY) }
 
 
@@ -176,7 +174,6 @@ start_session:: proc(session: ^Session) -> (err: Error) {
 	temp_directory: = get_temp_directory()
 	if ! os.exists(temp_directory) do os.make_directory(temp_directory, os.O_RDWR)
 	session.session_temp_directory = filepath.join({temp_directory, session.name})
-	fmt.println("SESSION TEMP FOLDER:", session.session_temp_directory)
 	if ! os.exists(session.session_temp_directory) {
 		err = os.Error(os.make_directory(session.session_temp_directory, os.O_RDWR))
 		if err != os.Error(os.General_Error.None) do return error_handler(err, "Couldn't create temp folder %s.", session.session_temp_directory) }
@@ -222,7 +219,6 @@ write_dll:: proc(cell: ^Cell) -> (err: Error) {
 compile_dll:: proc(cell: ^Cell) -> (err: Error) {
 	build_log_filepath: = filepath.join({ cell.session.session_temp_directory, "build_log.txt" })
 	build_command: = fmt.caprintf(`%s build %s %s -file -build-mode:dll -out:%s -linker:lld > "%s" 2>&1`, cell.tags.odin_path, cell.source_filepath, cell.tags.build_args, cell.dll_filepath, build_log_filepath)
-	fmt.eprintln("build command:", build_command)
 	status: = libc.system(build_command)
 	if status == -1 do return error_handler(General_Error.Spawn_Error, "Could not execture odin build command.")
 	if ! os.exists(cell.dll_filepath) {
@@ -291,7 +287,6 @@ cell_thread_proc:: proc(cell: ^Cell) {
 
 
 run_cell_single_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
-	// NOTE timeout has no effect in single-threaded mode. //
 	cell_thread_proc(cell)
 	cell_stdout, cell_stderr, _ = read_cell_output(cell)
 	cell_iopub, _ = read_cell_iopub(cell)
@@ -299,26 +294,18 @@ run_cell_single_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stder
 
 
 run_cell_multi_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
-	// Cell is ran in a separate thread to prevent runtime errors and OS errors from crashing the interpreter. //
 	cell_thread: = thread.create_and_start_with_poly_data(cell, cell_thread_proc, init_context = context, priority = .Normal, self_cleanup = false)
 	if cell_thread == nil do return "", "", "", error_handler(General_Error.Spawn_Error, "Failed to spawn cell thread.")
 	timer: time.Stopwatch
 	time.stopwatch_start(&timer)
-	fmt.eprintln("Starting cell thread.")
 	for ! thread.is_done(cell_thread) {
-		// fmt.println(time.stopwatch_duration(timer))
 		if int(time.duration_seconds(time.stopwatch_duration(timer))) >= cell.tags.timeout {
-			fmt.eprintln("Terminating cell thread.")
 			thread.terminate(cell_thread, 0)
 			error_handler(os.Error(os.General_Error.Timeout), "Cell timed out.")
 			break } }
-	fmt.eprintln("Finished cell thread.")
-	// DICK
-	// thread.join(cell_thread)
 	cell_stdout, cell_stderr, _ = read_cell_output(cell)
 	cell_iopub, _ = read_cell_iopub(cell)
 	thread.destroy(cell_thread)
-	fmt.eprintln("Destroyed cell thread.")
 	return cell_stdout, cell_stderr, cell_iopub, NOERR }
 
 
@@ -344,7 +331,7 @@ compile_new_cell:: proc(session: ^Session, cell_id: string, code_raw: string, in
 	err = init_cell(cell, cell_id, code_raw, index); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
 	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
 	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
-	// fmt.println(cell.code) // TEMP
+	// fmt.println(cell.code)
 	session.cells[cell_id] = cell
 	return cell, NOERR }
 

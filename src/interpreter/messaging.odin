@@ -29,7 +29,6 @@ Message_Header:: struct #packed {
 Message:: []u8
 
 
-// HANDLED //
 make_empty_message:: proc() -> (message: Message) {
 	message = make(Message, size_of(Message_Header))
 	header: ^Message_Header = auto_cast &message[0]
@@ -208,7 +207,6 @@ Debug_Event_Message_Header:: struct #packed {
 	return send_message(make_debug_event_message()) }
 
 
-// TODO Apply this to reduce repetition. //
 @(private) make_string_message:: proc(header: $T, str: string) -> Message {
 	header_size: = size_of(T)
 	message_size: = header_size + len(str)
@@ -218,7 +216,6 @@ Debug_Event_Message_Header:: struct #packed {
 	return message }
 
 
-// HANDLED //
 @(private) send_message:: proc(message: Message) -> Error {
 	if __cell__ == nil do return error_handler(General_Error.Invalid_State, "__cell__ is nil.")
 	if len(message) == 0 do return error_handler(General_Error.Data_Empty, "Message is nil.")

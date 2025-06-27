@@ -5,22 +5,29 @@ import time
 import win32pipe
 import win32file
 import win32api
+
+
 SECOND = 1_000_000_000
 MILLISECOND = 1_000_000
 DEFAULT_TIMEOUT = 10 * SECOND
 DEFAULT_DELAY = 100 * MILLISECOND
+
+
 class External_Pipe:
+
+
     path = None
     handle = None
     os = None
     size = None
+
+
     def __init__(self, name, mode, size):
         self.os = platform.system()
         self.size = size
         if self.os == "Windows":
             self.path = r"\\.\pipe\%s" % name
             start_time = time.time_ns()
-            print("Connecting to", self.path, flush=True)
             while (time.time_ns() - start_time) < DEFAULT_TIMEOUT:
                 try:
                     self.handle = win32file.CreateFile(self.path, mode, 0, None, win32file.OPEN_EXISTING, 0, 0)
@@ -31,8 +38,12 @@ class External_Pipe:
         elif self.os == "Linux":
             self.path = r"/tmp/pipe_%s" % name
             raise Exception("Linux is bad.")
+
+
     def read_string(self):
         return self.read_bytes().decode().strip()
+
+
     def read_bytes(self):
         if self.os == "Windows":
             start_time = time.time_ns()
@@ -46,8 +57,12 @@ class External_Pipe:
             return result
         elif self.os == "Linux":
             raise Exception("Linux is bad.")
+
+
     def write_string(self, input):
         return self.write_bytes(input.encode('utf-8'))
+
+
     def write_bytes(self, input):
         if self.os == "Windows":
             start_time = time.time_ns()
@@ -61,5 +76,8 @@ class External_Pipe:
             return False
         elif self.os == "Linux":
             raise Exception("Linux is bad.")
+
+
     def destroy_windows(self):
         win32file.WriteHandle(self.handle)
+

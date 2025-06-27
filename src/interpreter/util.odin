@@ -39,14 +39,14 @@ ANSI_UNDERLINED_BLUE::   "\e[4;34m"
 ANSI_UNDERLINED_PURPLE:: "\e[4;35m"
 ANSI_UNDERLINED_CYAN::   "\e[4;36m"
 ANSI_UNDERLINED_WHITE::  "\e[4;37m"
-ANSI_BOLD_BLACK::  "\e[1;30m"
-ANSI_BOLD_RED::    "\e[1;31m"
-ANSI_BOLD_GREEN::  "\e[1;32m"
-ANSI_BOLD_YELLOW:: "\e[1;33m"
-ANSI_BOLD_BLUE::   "\e[1;34m"
-ANSI_BOLD_PURPLE:: "\e[1;35m"
-ANSI_BOLD_CYAN::   "\e[1;36m"
-ANSI_BOLD_WHITE::  "\e[1;37m"
+ANSI_BOLD_BLACK::        "\e[1;30m"
+ANSI_BOLD_RED::          "\e[1;31m"
+ANSI_BOLD_GREEN::        "\e[1;32m"
+ANSI_BOLD_YELLOW::       "\e[1;33m"
+ANSI_BOLD_BLUE::         "\e[1;34m"
+ANSI_BOLD_PURPLE::       "\e[1;35m"
+ANSI_BOLD_CYAN::         "\e[1;36m"
+ANSI_BOLD_WHITE::        "\e[1;37m"
 ANSI_RESET::             "\e[0m"
 
 
@@ -64,23 +64,9 @@ windows_get_last_error:: proc() -> windows.System_Error {
 
 get_temp_directory:: proc() -> string {
 	return filepath.join({os.get_current_directory(), "temp"}) }
-	// path: string
-	// when ODIN_OS == .Windows {
-	// 	buffer_u16: []u16 = make([]u16, 256)
-	// 	buffer_u8:  []u8  = make([]u8, 256)
-	// 	n16: = windows.GetTempPathW(256, auto_cast &buffer_u16[0])
-	// 	assert(n16 > 0)
-	// 	n8: = utf16.decode_to_utf8(buffer_u8, buffer_u16[0:n16])
-	// 	assert(n8 == int(n16))
-	// 	path = string(buffer_u8[0:n8]) }
-	// else when ODIN_OS == Linux {
-	// 	path = "/tmp" }
-	// assert(os.exists(path))
-	// return path }
 
 
 clear_directory:: proc(path: string) -> (err: Error) {
-	fmt.println("Clearing", path)
 	if ! os.exists(path) do return NOERR
 	if ! os.is_dir(path) do return os.remove(path)
 	handle: os.Handle
@@ -88,15 +74,10 @@ clear_directory:: proc(path: string) -> (err: Error) {
 	if err != NOERR do return err
 	fi: []os.File_Info
 	fi, err = os.read_dir(handle, 100)
-	fmt.println("Deleting", path)
-	for f in fi {
-		clear_directory(f.fullpath) }
+	for f in fi do clear_directory(f.fullpath)
 	err = os.remove_directory(path)
 	if err != NOERR do return error_handler(err, "Could not delete %s", path)
 	return NOERR }
-
-
-// TODO Use os.get_current_directory and set it to __dir__ //
 
 
 time_string:: proc() -> string {
@@ -112,3 +93,4 @@ slice_contains_cell:: proc(cells: []^Cell, cell: ^Cell) -> bool {
 string_or_newline:: proc(str: string) -> string {
 	if str != "" do return str
 	else do return "\n" }
+

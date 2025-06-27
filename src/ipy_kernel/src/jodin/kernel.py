@@ -14,6 +14,8 @@ import win32pipe
 import win32file
 import win32api
 from .external_pipe import External_Pipe
+
+
 TIMEOUT                        = 2.0
 PIPE_TIMEOUT                   = 10.0
 DELAY                          = 0.1
@@ -24,40 +26,26 @@ KERNEL_SOURCE_PIPE_BUFFER_SIZE = 64 * KILOBYTE
 KERNEL_STDOUT_PIPE_BUFFER_SIZE = 16 * KILOBYTE
 KERNEL_STDERR_PIPE_BUFFER_SIZE = 16 * KILOBYTE
 KERNEL_IOPUB_PIPE_BUFFER_SIZE  = 16 * MEGABYTE
+
+
 def get_odin_root():
     p = pexpect.popen_spawn.PopenSpawn('odin root')
     p.expect(pexpect.EOF)
     return str(p.before)[2:-1]
-# def clear_directory(path):
-# 	if ! os.exists(path) do return NOERR
-# 	if ! os.is_dir(path) do return os.remove(path)
-# 	handle: os.Handle
-# 	handle, err = os.open(path)
-# 	if err != NOERR do return err
-# 	fi: []os.File_Info
-# 	fi, err = os.read_dir(handle, 100)
-# 	fmt.println("Deleting", path)
-# 	for f in fi {
-# 		clear_directory(f.fullpath) }
-# 	err = os.remove_directory(path)
-# 	if err != NOERR do return error_handler(err, "Could not delete %s", path)
-# 	return NOERR }
-# def get_temp_path():
-#     os = platform.system()
-#     if os == 'Windows':
-# 		return 'c/Users/Nikola Stefanov/AppData/Local/Temp' }
-# 	elif os == 'Linux':
-# 		return '/tmp'
-# 	else:
-# 		return '/tmp'
+
+
 KERNEL_SOURCE_PIPE_NAME = r"jodin_kernel_source"
 KERNEL_STDOUT_PIPE_NAME = r"jodin_kernel_stdout"
 KERNEL_IOPUB_PIPE_NAME  = r"jodin_kernel_iopub"
+
+
 def print_and_flush(*args):
     for arg in args:
         sys.__stdout__.write(arg)
     sys.__stdout__.write('\n')
     sys.__stdout__.flush()
+
+
 MESSAGE_TYPE_NONE                = 0
 MESSAGE_TYPE_STREAM              = 1
 MESSAGE_TYPE_DISPLAY_DATA        = 2
@@ -68,6 +56,8 @@ MESSAGE_TYPE_ERROR               = 6
 MESSAGE_TYPE_STATUS              = 7
 MESSAGE_TYPE_CLEAR_OUTPUT        = 8
 MESSAGE_TYPE_DEBUG_EVENT         = 9
+
+
 message_type_names = [
     "TYPE_NONE",
     "TYPE_STREAM",
@@ -79,7 +69,11 @@ message_type_names = [
     "TYPE_STATUS",
     "TYPE_CLEAR_OUTPUT",
     "TYPE_DEBUG_EVENT" ]
+
+
 class OdinKernel(ipykernel.kernelbase.Kernel):
+
+
     implementation         = "JOdin"
     implementation_version = "0.1.0-alpha"
     language               = "odin"
@@ -92,26 +86,26 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
     interpreter_path       = ""
     interpreter_process    = ""
     counter                = 1
+
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         redirected_stdout = sys.stdout
         sys.stdout = sys.__stdout__
-        # print_and_flush("Temp dir:")
-        # print_and_flush(tempfile.gettempdir())
-        print_and_flush("CWD:", os.getcwd())
         temp_directory = os.getcwd() + r"\temp"
         if os.path.exists(temp_directory): shutil.rmtree(temp_directory)
         self.interpreter_path = 'jodin.exe'
         subprocess.Popen(self.interpreter_path)
         self.connect_to_server()
-        print_and_flush("__init__ end")
         sys.stdout = redirected_stdout
+
+
     def send_message(self, message):
         return self.code_pipe.write_string(message)
+
+
     def parse_message_stream(self, stream):
-        print_and_flush("parse_message_stream begin")
         if len(stream) < 5:
-            print_and_flush("parse_message_stream end")
             return []
         metaheader_fields = struct.unpack('=BI', stream[0:5])
         metaheader = {
@@ -199,11 +193,14 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
             pass
         if len(stream) > message_len:
             self.parse_message_stream(stream[message_len:])
-        print_and_flush("parse_message_stream end")
+
+
     def send_response_stream(self, stream_name, response_text):
         message = {
             'name': stream_name, 'text': response_text }
         self.send_response(self.iopub_socket, 'stream', message)
+
+
     def send_response_display_data(self, image_data, mime_type, width, height, display_id=''):
         message = {
             'data': { mime_type: image_data },
@@ -211,16 +208,22 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
         if display_id != '':
             message['transient'] = { 'display_id': display_id }
         self.send_response(self.iopub_socket, 'display_data', message)
+
+
     def send_response_update_display_data(self, image_data, mime_type, width, height, display_id):
         message = {
             'data': { mime_type: image_data },
             'metadata': { mime_type: { 'width': width, 'height': height } },
             'transient': { 'display_id': display_id } }
         self.send_response(self.iopub_socket, 'update_display_data', message)
+
+
     def send_response_execute_input(self, code, execution_count):
         message = {
             'code': code, 'execution_count': execution_count }
         self.send_response(self.iopub_socket, 'execute_input', message)
+
+
     def send_response_execute_result(self, execution_count, image_data, mime_type, width, height, display_id=''):
         message = {
             'execution_count': execution_count, 'data': { mime_type: image_data },
@@ -228,52 +231,52 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
         if display_id != '':
             message['transient'] = { 'display_id': display_id }
         self.send_response(self.iopub_socket, 'execute_result', message)
+
+
     def send_response_error(self, ename, evalue, traceback):
         message = {
             'ename': ename, 'evalue': evalue, 'traceback': traceback }
         self.send_response(self.iopub_socket, 'error', message)
+
+
     def send_response_status(self, execution_state):
         message = {
             'execution_state': execution_state }
         self.send_response(self.iopub_socket, 'status', message)
+
+
     def send_response_clear_output(self, wait):
         message = {
             'wait': wait }
         self.send_response(self.iopub_socket, 'clear_output', message)
+
+
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
-        print_and_flush("do_execute begin")
         current_counter = self.counter
         if code.strip() in ['quit', 'exit']:
             self.do_shutdown(True)
-            print_and_flush("do_execute end")
             return
         cell_id = str(self._parent_header['metadata']['cellId'])
-        print_and_flush("sending message")
         if self.send_message(cell_id + '\n' + code):
-            print_and_flush("getting response")
             stdout_message, message_message = (self.stdout_pipe.read_string(), self.message_pipe.read_bytes())
-            print_and_flush("printing response")
             self.send_response_stream('stdout', stdout_message)
             self.parse_message_stream(message_message)
         else:
             self.send_response_stream('stdout', "Error: Could not send message to jodin.")
-        print_and_flush("do_execute end")
         return {'status': 'ok',
                 'execution_count': self.execution_count,
                 'payload': [],
                 'user_expressions': {}}
+
+
     def do_shutdown(self, restart):
         ipykernel.kernelbase.Kernel.do_shutdown(self, restart)
+
+
     def connect_to_server(self):
-        # time.sleep(5)
-        print_and_flush("Connecting to CODE pipe...")
+        print_and_flush("[ kernel ] Connecting to jodin interpreter...")
         self.code_pipe = External_Pipe(KERNEL_SOURCE_PIPE_NAME, win32file.GENERIC_WRITE, KERNEL_SOURCE_PIPE_BUFFER_SIZE)
-        print_and_flush("Done.")
-        # time.sleep(5)
-        print_and_flush("Connecting to STDOUT pipe...")
         self.stdout_pipe = External_Pipe(KERNEL_STDOUT_PIPE_NAME, win32file.GENERIC_READ, KERNEL_STDOUT_PIPE_BUFFER_SIZE)
-        print_and_flush("Done.")
-        # time.sleep(5)
-        print_and_flush("Connecting to IOPUB pipe...")
         self.message_pipe = External_Pipe(KERNEL_IOPUB_PIPE_NAME, win32file.GENERIC_READ, KERNEL_IOPUB_PIPE_BUFFER_SIZE)
-        print_and_flush("Done.")
+        print_and_flush("[ kernel ] Done.")
+

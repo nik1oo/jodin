@@ -21,13 +21,6 @@ import "core:bytes"
 import "core:thread"
 
 
-// Types of errors:
-// * unrecoverable interpreter error -- print to the front-end. restart kernel.
-// * recoverable interpreter errro -- print to the front-end and proceed.
-// * unrecoverable kernel error -- catch exception, print to the console. restart kernel.
-// * recoverable kernel error -- catch exception, print to the front-end. restart kernel.
-
-
 General_Error:: enum {
 	Data_Empty,
 	Invalid_Format,
@@ -47,7 +40,6 @@ Error:: union {
 NOERR: Error = os.Error(os.General_Error.None)
 
 
-// ERROR HANDLERS //
 error_handler:: proc { error_handler_from_source_code_location, error_handler_from_source_code_location_sb, error_handler_from_tokenizer_pos }
 error_handler_from_source_code_location_sb:: proc(sb: ^strings.Builder, err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
 	if err == NOERR do return err
@@ -64,7 +56,6 @@ error_handler_from_tokenizer_pos:: proc(err: Error, loc: tokenizer.Pos, msg: str
 	return error_handler_from_source_code_location(err, msg, ..args, loc = source_code_location_from_tokenizer_pos(loc)) }
 
 
-// ASSERT HANDLERS //
 assert_handler:: proc { assert_handler_from_source_code_location, assert_handler_from_tokenizer_pos }
 assert_handler_from_source_code_location:: proc(condition: bool, err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
 	if condition do return NOERR
@@ -78,9 +69,6 @@ source_code_location_from_tokenizer_pos:: proc(pos: tokenizer.Pos) -> runtime.So
 	return runtime.Source_Code_Location{ file_path = pos.file, line = auto_cast pos.line, column = auto_cast pos.column } }
 
 
-try:: proc(err: Error, loc: = #caller_location) {
-	if err != NOERR do panic(fmt.aprintln(err), loc) }
-
-
 noerr:: proc(err: Error) -> bool {
 	return err == NOERR }
+

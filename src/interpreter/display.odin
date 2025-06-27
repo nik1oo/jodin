@@ -15,7 +15,8 @@ Audio_Format:: enum u8 {
 	Audio_Format.MP3  = "audio/mpeg",
 	Audio_Format.WAV  = "audio/wav",
 	Audio_Format.WEBM = "audio/webm" }
-// HANDLED //
+
+
 display_audio:: proc(data: []u8, format: Audio_Format, element_id: string = "", loc: = #caller_location) -> (err: Error) {
 	if data == nil do return error_handler(General_Error.Data_Empty, "Data is nil.")
 	if format > .WEBM do return error_handler(General_Error.Invalid_Format, "Invalid audio format.")
@@ -32,7 +33,8 @@ Image_Format:: enum u8 {
 	Image_Format.JPEG = "image/jpeg",
 	Image_Format.GIF  = "image/gif",
 	Image_Format.WEBP = "image/webp" }
-// HANDLED //
+
+
 display_image:: proc(data: []u8, format: Image_Format, width: uint, height: uint, display_id: string = "", loc: = #caller_location) -> (err: Error) {
 	if data == nil do return error_handler(General_Error.Data_Empty, "Data is nil.")
 	if format > .WEBP do return error_handler(General_Error.Invalid_Format, "Invalid image format.")

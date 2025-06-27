@@ -22,5 +22,6 @@ init_by_path:: proc(pipe: ^External_Pipe, path: string, mode: int, size: uint) -
 	return err }
 
 
-destroy:: proc(pipe: ^External_Pipe) {
-	os.close(pipe.handle) }
+destroy:: proc(pipe: ^External_Pipe) -> (err: os.Error) {
+	return os.close(pipe.handle) }
+

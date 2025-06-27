@@ -23,12 +23,6 @@ import "core:bytes"
 import "core:thread"
 
 
-// FILE TAGS //
-// #+        -- applied to current cell.
-// #++       -- applied to all cells.
-// #+args    -- extra build arguments.
-// #+timeout -- override default cell execution timeout.
-// #+odin    -- override default path to Odin.
 Tags :: struct {
 	odin_path: string,
 	build_args: string,
@@ -82,11 +76,7 @@ insert_package_decl:: proc(src, package_name: string) -> (res: string) {
 	return strings.concatenate({src[:i], fmt.aprintfln("package %s", package_name), src[i:]}) }
 
 
-// HANDLED //
 preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
-
-	fmt.eprintln("Starting preprocessing.")
-	defer fmt.println("Exiting preprocessor.")
 
 	sb:=                            strings.builder_make_len_cap(0, 1 * mem.Megabyte)
 	file_tags:=                     strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
@@ -98,15 +88,13 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	import_stmts:=                  strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
 	external_variable_ident_exprs:= make_dynamic_array([dynamic]^ast.Node)
 
-
 	// ASSEMBLE PREPROCESSOR INPUT //
 	src: = insert_package_decl(cell.code_raw, cell.name)
-	fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
-	fmt.eprintln(src)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	// fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
+	// fmt.eprintln(src)
+	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
 
 	// INITIALIZE PREPROCESSOR //
-	fmt.eprintln("Parsing declarations")
 	NO_POS:: tokenizer.Pos{}
 	cell.pkg = ast.new_from_positions(ast.Package, NO_POS, NO_POS)
 	cell.pkg.fullpath, _ = filepath.abs(cell.package_filepath)
@@ -122,7 +110,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 
 	// COLLECT EXTERNAL VARIABLE IDENT EXPRS //
 	// TODO This doesn't consider overshadowing. //
-	fmt.eprintln("Collecting external variable ident exprs")
 	Visitor_Data:: struct { cell: ^Cell, external_variable_ident_exprs: ^[dynamic]^ast.Node }
 	visitor_data: Visitor_Data = { cell, &external_variable_ident_exprs }
 	v := &ast.Visitor{
@@ -142,8 +129,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 			return v },
 		data = &visitor_data }
 	ast.walk(v, &file.node)
-	// for i in 0 ..< len(external_variable_ident_exprs) {
-	// 	fmt.eprintln(node_string(file, external_variable_ident_exprs[i]^, &external_variable_ident_exprs)) }
 
 	// PARSE TAGS //
 	cell.tags.odin_path = "odin"
@@ -161,7 +146,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	// PARSE DECLARATIONS //
 	DECLS: for decl_node, _ in file.decls do switch decl in decl_node.derived_stmt {
 		case ^ast.Value_Decl:
-			fmt.println("[ Value_Decl ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			PREPROCESS_VALUE_DECL: {
 				type_string: string = ""
 				inferred_type: bool = false
@@ -170,19 +154,15 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 				if ! decl.is_mutable {
 					if len(decl.values) == 1 do #partial switch value in decl.values[0].derived_expr {
 						case ^ast.Proc_Lit:
-							fmt.eprintln("[ Proc_Lit ]", node_string(file, value, &external_variable_ident_exprs))
 							append(&cell.global_procedures, Procedure{
 								name = (decl.names[0].derived_expr.(^ast.Ident)).name,
 								type = node_string(file, value.type, &external_variable_ident_exprs),
 								value = node_string(file, value.body, &external_variable_ident_exprs) })
-							fmt.eprintln("[ proc ]", cell.global_procedures[len(cell.global_procedures)-1])
 							break PREPROCESS_VALUE_DECL
 						case ^ast.Basic_Lit:
-							fmt.eprintln("[ Basic_Lit ]", node_string(file, value, &external_variable_ident_exprs))
 							append(&cell.global_constants, node_string(file, decl, &external_variable_ident_exprs))
 							break PREPROCESS_VALUE_DECL
 						case ^ast.Binary_Expr:
-							fmt.eprintln("[ Binary_Expr ]", node_string(file, value, &external_variable_ident_exprs))
 							append(&cell.global_constants, node_string(file, decl, &external_variable_ident_exprs))
 							break PREPROCESS_VALUE_DECL
 						case:
@@ -208,75 +188,50 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 					else {
 						append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = "" }) } } }
 		case ^ast.Import_Decl:
-			fmt.println("[ Import_Decl ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			fmt.sbprintln(&import_stmts, node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Bad_Decl:
-			fmt.println("[ Bad_Decl ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Bad_Decl: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Bad_Stmt:
-			fmt.println("[ Bad_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Bad_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
-			// #partial switch any_stmt in decl.derived_stmt {
-			// 	case: fmt.eprintfln("Unhandled %s", any_stmt) }
 		case ^ast.Empty_Stmt:
-			fmt.println("[ Empty_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Empty_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Tag_Stmt:
-			fmt.println("[ Tag_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Tag_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Assign_Stmt:
-			fmt.println("[ Assign_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Expr_Stmt:
-			fmt.println("[ Expr_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Block_Stmt:
-			fmt.println("[ Block_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.If_Stmt:
-			fmt.println("[ If_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.When_Stmt:
-			fmt.println("[ When_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Defer_Stmt:
-			fmt.println("[ Defer_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Range_Stmt:
-			fmt.println("[ Range_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Return_Stmt:
-			fmt.println("[ Return_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Return_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.For_Stmt:
-			fmt.println("[ For_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, strings.concatenate({decl.label != nil ? fmt.aprintf("%s: ", node_string(file, decl.label, &external_variable_ident_exprs)) : "", node_string(file, decl, &external_variable_ident_exprs)}))
 		case ^ast.Unroll_Range_Stmt:
-			fmt.println("[ Unroll_Range_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Unroll_Range_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Case_Clause:
-			fmt.println("[ Case_Clause ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Case_Clause: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Switch_Stmt:
-			fmt.println("[ Switch_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			append(&cell.main_statements, strings.concatenate({decl.partial ? "#partial " : "", node_string(file, decl, &external_variable_ident_exprs)}))
 		case ^ast.Type_Switch_Stmt:
-			fmt.println("[ Type_Switch_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Type_Switch_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Branch_Stmt:
-			fmt.println("[ Branch_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Branch_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Using_Stmt:
-			fmt.println("[ Using_Stmt ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Using_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Package_Decl:
-			fmt.println("[ Package_Decl ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Package_Decl: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Foreign_Block_Decl:
-			fmt.println("[ Foreign_Block_Decl ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Foreign_Block_Decl: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Foreign_Import_Decl:
-			fmt.println("[ Foreign_Import_Decl ]", node_string(file, decl_node, &external_variable_ident_exprs))
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Foreign_Import_Decl: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case:
 			return error_handler(General_Error.Preprocessor_Error, "Undandled statement %s of type %T.", node_string(file, decl_node, &external_variable_ident_exprs), decl_node.derived_stmt) }
@@ -284,18 +239,14 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl:: proc(sb: ^strings.Builder) { fmt.sbprintln(sb) }
 
 	// FILE TAGS //
-	fmt.eprintln("Writing file tags")
 	append(&sb.buf, ..file_tags.buf[:])
 	nl(&sb)
 
 	// PACKAGE DECLARATION //
-	fmt.eprintln("Writing package declarations")
-	// fmt.sbprintln(&sb, "#+feature dynamic-literals")
 	fmt.sbprintln(&sb, "package", cell.name)
 	nl(&sb)
 
 	// IMPORT DECLARATIONS //
-	fmt.eprintln("Writing import declarations")
 	fmt.sbprintln(&sb, "import \"shared:jodin\"")
 	fmt.sbprintln(&sb, "import \"core:io\"")
 	fmt.sbprintln(&sb, "import \"core:os\"")
@@ -304,7 +255,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl(&sb)
 
 	// CELL VARIABLES //
-	fmt.eprintln("Writing cell variables")
 	fmt.sbprintln(&sb,
 		"@(export) __cell__: ^jodin.Cell = nil")
 	fmt.sbprintln(&sb,
@@ -314,7 +264,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl(&sb)
 
 	// VARIABLE DECLARATIONS //
-	fmt.eprintln("Writing variable declarations")
 	for _, other_cell in cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables {
 		if variable_is_pointer(variable) do fmt.sbprintfln(&sb, "%s: %s", variable.name, variable.type)
 		else do fmt.sbprintfln(&sb, "%s: ^%s", variable.name, variable.type) }
@@ -322,19 +271,16 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl(&sb)
 
 	// EXTERNAL PROCEDURE DECLARATIONS //
-	fmt.eprintln("Writing external procedure declarations")
 	for _, other_cell in cell.session.cells do if other_cell.loaded do for procedure in other_cell.global_procedures {
 		fmt.sbprintfln(&sb, "%s : %s = nil", procedure.name, procedure.type) }
 	nl(&sb)
 
 	// INTERNAL PROCEDURE DECLARATIONS //
-	fmt.eprintln("Writing internal procedure declarations")
 	for procedure in cell.global_procedures {
 		fmt.sbprintfln(&sb, "@(export) %s :: %s %s", procedure.name, procedure.type, procedure.value) }
 	nl(&sb)
 
 	// SYMMAP PROCS //
-	fmt.eprintln("Writing symmap procs")
 	fmt.sbprintln(&sb,
 		"@(export) __update_symmap__:: proc() {")
 	for variable in cell.global_variables do if variable_is_pointer(variable) do fmt.sbprintfln(&sb,
@@ -356,13 +302,11 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl(&sb)
 
 	// GLOBAL CONSTANTS //
-	fmt.eprintln("Writing global constants")
 	for _, other_cell in cell.session.cells do if other_cell.loaded do for type in other_cell.global_constants do fmt.sbprintln(&sb, type)
 	for type in cell.global_constants do fmt.sbprintln(&sb, type)
 	nl(&sb)
 
 	// INIT PROC //
-	fmt.eprintln("Writing init proc")
 	fmt.sbprintln(&sb,
 		"@(export) __init__:: proc(_cell: ^jodin.Cell, _stdout: os.Handle, _stderr: os.Handle, _iopub: os.Handle, _symmap: ^map[string]rawptr) {")
 	fmt.sbprintln(&sb,
@@ -378,17 +322,12 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl(&sb)
 
 	// MAIN PROC //
-	fmt.eprintln("Writing main proc")
 	fmt.sbprintln(&sb,
 		"@(export) __main__:: proc() {\n" +
 		"	context = __cell__.cell_context\n")
 	for variable in cell.global_variables do if variable.value != "" do fmt.sbprintfln(&sb, "\t%s = %s", variable.name, variable.value)
 	for expression in cell.main_statements do fmt.sbprintfln(&sb, "\t%s", expression)
 	fmt.sbprintln(&sb,
-		// "	os.flush(os.stdout)\n" +
-		// "	os.flush(os.stderr)\n" +
-		// "	message: = jodin.make_empty_message()\n" +
-		// "	os.write(auto_cast __cell__.iopub_pipe.input_handle, message)\n" +
 		"	os.stdout = __original_stdout__\n" +
 		"	os.stderr = __original_stderr__\n" +
 		"}")
@@ -398,9 +337,9 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	// SAVE THINGS FOR OTHER CELLS //
 	cell.import_stmts = strings.to_string(import_stmts)
 
-	fmt.eprintln(ANSI_BLUE, "-----------------------------------------------------")
-	fmt.eprintln(cell.code)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	// fmt.eprintln(ANSI_BLUE, "-----------------------------------------------------")
+	// fmt.eprintln(cell.code)
+	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
 
 	return NOERR }
 

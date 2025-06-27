@@ -33,6 +33,7 @@ connect:: proc(pipe: ^External_Pipe) -> (err: os.Error) {
 	return os.General_Error.None }
 
 
-destroy:: proc(pipe: ^External_Pipe) {
+destroy:: proc(pipe: ^External_Pipe) -> (err: os.Error) {
 	windows.DisconnectNamedPipe(auto_cast pipe.handle)
-	os.close(pipe.handle) }
+	return os.close(pipe.handle) }
+

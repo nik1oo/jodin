@@ -2,28 +2,6 @@ package jodin
 import "core:fmt"
 
 
-// Is this actually necessary? //
-
-
-// Classes of Change:
-// * Change of data
-//   - Renaming
-//   - Retyping
-//   - Undeclaration
-//   - Change of layout
-//   - Change of content
-// * Change of proc
-//   - Renaming
-//   - Re-typing
-//   - Undeclaration
-//   - Change of content
-
-
-// If A depends on B, there are two kinds of dependencies, classified by the way in which they must be resolved:
-//  * (Weak Dependency) When B is recompiled, A must be recompiled.
-//  * (Strong Dependency) When B is recompiled, A must be recompiled, its memory deallocated, and its __main__ called.
-
-
 determine_dependers:: proc(cell_B: ^Cell) {
 	session: = cell_B.session
 	if cell_B.compilation_count == 0 do return
@@ -54,7 +32,6 @@ deprules: [3]proc(cell_A, cell_B: ^Cell) -> (weak, strong: bool) = {
 deprule_undeclaration:: proc(cell_A, cell_B: ^Cell) -> (weak, strong: bool) {
 	// A symbol is declared in cell B and used in cell A. If the symbol is undeclared and cell B is recompiled, cell A must also
 	// be recompiled.
-
 	return weak, strong }
 
 
@@ -68,3 +45,4 @@ deprule_proc_type_change:: proc(cell_A, cell_B: ^Cell) -> (weak, strong: bool) {
 	// A proc is defined in cell B and used in cell A. If the type of the proc is changed and cell B is recompiled, cell A must
 	// also be recompiled.
 	return weak, strong }
+
