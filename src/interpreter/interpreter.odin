@@ -133,11 +133,11 @@ init_cell:: proc(cell: ^Cell, cell_id: string, code_raw: string, index: uint = 0
 	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not make directory %s.", cell.package_filepath)
 	err = os.write_entire_file_or_err(cell.source_filepath, transmute([]u8)cell.code_raw)
 	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not write to %s.", cell.source_filepath)
-	err = internal_pipe.init(&cell.stdout_pipe, 16 * mem.Kilobyte)
+	err = internal_pipe.init(&cell.stdout_pipe, KERNEL_STDOUT_PIPE_BUFFER_SIZE)
 	if err != NOERR do return error_handler(err, "Could not create stdout pipe.")
-	err = internal_pipe.init(&cell.stderr_pipe, 16 * mem.Kilobyte)
+	err = internal_pipe.init(&cell.stderr_pipe, KERNEL_STDERR_PIPE_BUFFER_SIZE)
 	if err != NOERR do return error_handler(err, "Could not create stderr pipe.")
-	err = internal_pipe.init(&cell.iopub_pipe, 16 * mem.Megabyte)
+	err = internal_pipe.init(&cell.iopub_pipe, KERNEL_IOPUB_PIPE_BUFFER_SIZE)
 	if err != NOERR do return error_handler(err, "Could not create iopub pipe.")
 	return NOERR }
 reinit_cell:: proc(cell: ^Cell, code_raw: string) -> Error {
@@ -166,9 +166,9 @@ start_session:: proc(session: ^Session) -> (err: Error) {
 	session.os_stderr = os.stderr
 	session.stream_in = os.stream_from_handle(os.stdin)
 	session.stream_out = os.stream_from_handle(os.stdout)
-	err = internal_pipe.init(&session.stdout_pipe, 16 * mem.Kilobyte)
+	err = internal_pipe.init(&session.stdout_pipe, CELL_STDOUT_PIPE_BUFFER_SIZE)
 	if err != NOERR do return error_handler(err, "Could not create stdout pipe.")
-	err = internal_pipe.init(&session.stderr_pipe, 16 * mem.Kilobyte)
+	err = internal_pipe.init(&session.stderr_pipe, CELL_STDERR_PIPE_BUFFER_SIZE)
 	if err != NOERR do return error_handler(err, "Could not create stderr pipe.")
 	context.logger = log.create_console_logger()
 	session.cells = make(map[string]^Cell)

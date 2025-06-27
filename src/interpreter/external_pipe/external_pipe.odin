@@ -13,8 +13,8 @@ External_Pipe:: struct {
 	handle: os.Handle }
 
 
-init_by_name:: proc(pipe: ^External_Pipe, name: string, $mode: int) -> (err: os.Error) {
-	return init_by_path(pipe, make_path(name), mode) }
+init_by_name:: proc(pipe: ^External_Pipe, name: string, mode: int, size: uint) -> (err: os.Error) {
+	return init_by_path(pipe, make_path(name), mode, size) }
 
 
 read_string:: proc{ read_string_async, read_string_sync }

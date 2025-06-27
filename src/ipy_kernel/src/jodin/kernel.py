@@ -12,10 +12,16 @@ import win32pipe
 import win32file
 import win32api
 from .external_pipe import External_Pipe
-TIMEOUT         = 2.0
-PIPE_TIMEOUT    = 10.0
-DELAY           = 0.1
-EXECUTE_TIMEOUT = 10.0
+TIMEOUT                        = 2.0
+PIPE_TIMEOUT                   = 10.0
+DELAY                          = 0.1
+EXECUTE_TIMEOUT                = 10.0
+KILOBYTE                       = 1024
+MEGABYTE                       = 1024 * KILOBYTE
+KERNEL_SOURCE_PIPE_BUFFER_SIZE = 64 * KILOBYTE
+KERNEL_STDOUT_PIPE_BUFFER_SIZE = 16 * KILOBYTE
+KERNEL_STDERR_PIPE_BUFFER_SIZE = 16 * KILOBYTE
+KERNEL_IOPUB_PIPE_BUFFER_SIZE  = 16 * MEGABYTE
 def get_odin_root():
     p = pexpect.popen_spawn.PopenSpawn('odin root')
     p.expect(pexpect.EOF)
@@ -241,13 +247,13 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
     def connect_to_server(self):
         # time.sleep(5)
         print_and_flush("Connecting to CODE pipe...")
-        self.code_pipe = External_Pipe(KERNEL_SOURCE_PIPE_NAME, win32file.GENERIC_WRITE)
+        self.code_pipe = External_Pipe(KERNEL_SOURCE_PIPE_NAME, win32file.GENERIC_WRITE, KERNEL_SOURCE_PIPE_BUFFER_SIZE)
         print_and_flush("Done.")
         # time.sleep(5)
         print_and_flush("Connecting to STDOUT pipe...")
-        self.stdout_pipe = External_Pipe(KERNEL_STDOUT_PIPE_NAME, win32file.GENERIC_READ)
+        self.stdout_pipe = External_Pipe(KERNEL_STDOUT_PIPE_NAME, win32file.GENERIC_READ, KERNEL_STDOUT_PIPE_BUFFER_SIZE)
         print_and_flush("Done.")
         # time.sleep(5)
         print_and_flush("Connecting to IOPUB pipe...")
-        self.message_pipe = External_Pipe(KERNEL_IOPUB_PIPE_NAME, win32file.GENERIC_READ)
+        self.message_pipe = External_Pipe(KERNEL_IOPUB_PIPE_NAME, win32file.GENERIC_READ, KERNEL_IOPUB_PIPE_BUFFER_SIZE)
         print_and_flush("Done.")

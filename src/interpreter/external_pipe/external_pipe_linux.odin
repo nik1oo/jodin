@@ -12,7 +12,7 @@ make_path:: proc(name: string) -> string {
 	return fmt.aprintf(`/tmp/pipe_%s`, name) }
 
 
-init_by_path:: proc(pipe: ^External_Pipe, path: string, mode: int) -> (err: os.Error) {
+init_by_path:: proc(pipe: ^External_Pipe, path: string, mode: int, size: uint) -> (err: os.Error) {
 	if ! ((mode == os.O_RDONLY) || (mode == os.O_WRONLY)) do return os.General_Error.Unsupported
 	if ! pipe_path_is_valid(path) do return os.General_Error.Unsupported
 	pipe.path = path

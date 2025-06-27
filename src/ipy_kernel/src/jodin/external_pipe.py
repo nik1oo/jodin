@@ -13,8 +13,10 @@ class External_Pipe:
     path = None
     handle = None
     os = None
-    def __init__(self, name, mode):
+    size = None
+    def __init__(self, name, mode, size):
         self.os = platform.system()
+        self.size = size
         if self.os == "Windows":
             self.path = r"\\.\pipe\%s" % name
             start_time = time.time_ns()
@@ -36,7 +38,7 @@ class External_Pipe:
             start_time = time.time_ns()
             result = ""
             while (time.time_ns() - start_time) < DEFAULT_TIMEOUT:
-                try: result = win32file.ReadFile(self.handle, 65_536)[1]
+                try: result = win32file.ReadFile(self.handle, self.size)[1]
                 except:
                     time.sleep(DEFAULT_DELAY / SECOND)
                     continue

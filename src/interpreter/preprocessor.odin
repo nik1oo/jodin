@@ -2,6 +2,7 @@ package jodin
 import "base:runtime"
 import "core:reflect"
 import "core:fmt"
+import "core:mem"
 import "core:dynlib"
 import "core:strings"
 import "core:strconv"
@@ -45,7 +46,7 @@ node_string:: proc(file: ^ast.File, node: ast.Node, external_variable_ident_expr
 		expr: = external_variable_ident_exprs[i]
 		if in_range(expr.pos.offset, node.pos.offset, node.end.offset) do append(&hat_points, expr.end.offset) }
 	if len(hat_points) == 0 do return file.src[node.pos.offset:node.end.offset]
-	sb: strings.Builder = strings.builder_make_len_cap(0, 10_000)
+	sb: strings.Builder = strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
 	defer strings.builder_destroy(&sb)
 	i: = node.pos.offset
 	for hat_point in hat_points {
@@ -87,14 +88,14 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	fmt.eprintln("Starting preprocessing.")
 	defer fmt.println("Exiting preprocessor.")
 
-	sb:=                            strings.builder_make_len_cap(0, 100_000)
-	file_tags:=                     strings.builder_make_len_cap(0, 10_000)
-	package_directive_stmts:=       strings.builder_make_len_cap(0, 10_000)
-	global_constant_stmts:=         strings.builder_make_len_cap(0, 10_000)
-	global_variable_stmts:=         strings.builder_make_len_cap(0, 10_000)
-	global_procedure_stmts:=        strings.builder_make_len_cap(0, 10_000)
-	main_stmts:=                    strings.builder_make_len_cap(0, 10_000)
-	import_stmts:=                  strings.builder_make_len_cap(0, 10_000)
+	sb:=                            strings.builder_make_len_cap(0, 64 * mem.Kilobyte)
+	file_tags:=                     strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
+	package_directive_stmts:=       strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
+	global_constant_stmts:=         strings.builder_make_len_cap(0, 4 * mem.Kilobyte)
+	global_variable_stmts:=         strings.builder_make_len_cap(0, 4 * mem.Kilobyte)
+	global_procedure_stmts:=        strings.builder_make_len_cap(0, 32 * mem.Kilobyte)
+	main_stmts:=                    strings.builder_make_len_cap(0, 32 * mem.Kilobyte)
+	import_stmts:=                  strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
 	external_variable_ident_exprs:= make_dynamic_array([dynamic]^ast.Node)
 
 

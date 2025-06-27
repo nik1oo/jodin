@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:dynlib"
 import "core:strings"
 import "core:os"
+import "core:mem"
 import "core:c/libc"
 import "core:odin/parser"
 import "core:odin/tokenizer"
@@ -22,12 +23,20 @@ import "core:thread"
 import "external_pipe"
 
 
-VERSION:: "0.1.0-alpha"
-DEFAULT_CELL_TIMEOUT:: 10
-JODIN:: "JOdin: "
-JODIN_KERNEL:: "JOdin Kernel: "
-PIPE_TIMEOUT:: 10 * time.Second
-PIPE_DELAY:: 100 * time.Millisecond
+VERSION::                        "0.1.0-alpha"
+DEFAULT_CELL_TIMEOUT::           10
+JODIN::                          "jodin: "
+JODIN_KERNEL::                   "jodin kernel: "
+PIPE_TIMEOUT::                   10 * time.Second
+PIPE_DELAY::                     100 * time.Millisecond
+KERNEL_SOURCE_PIPE_BUFFER_SIZE:: 64 * mem.Kilobyte
+KERNEL_STDOUT_PIPE_BUFFER_SIZE:: 16 * mem.Kilobyte
+KERNEL_STDERR_PIPE_BUFFER_SIZE:: 16 * mem.Kilobyte
+KERNEL_IOPUB_PIPE_BUFFER_SIZE::  16 * mem.Megabyte
+CELL_STDOUT_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
+CELL_STDERR_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
+
+
 #assert((ODIN_OS == .Windows) || (ODIN_OS == .Linux))
 main:: proc() {
 	err: Error
@@ -40,7 +49,7 @@ main:: proc() {
 	counter: uint = 1
 	for {
 		defer { counter += 1 }
-		response, _ := strings.builder_make_len_cap(0, 100_000)
+		response, _ := strings.builder_make_len_cap(0, CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
 		fmt.sbprint(&response, ANSI_RED)
 		cell_id, code_raw, _: = receive_message(session)
 		cell_stdout, cell_stderr, cell_iopub: string
