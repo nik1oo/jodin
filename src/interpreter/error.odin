@@ -1,4 +1,3 @@
-#+private
 package jodin
 import "base:runtime"
 import "core:reflect"
