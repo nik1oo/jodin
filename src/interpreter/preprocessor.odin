@@ -144,7 +144,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		else do fmt.sbprintln(&file_tags, tag.text) }
 
 	// PARSE DECLARATIONS //
-	DECLS: for decl_node, _ in file.decls do switch decl in decl_node.derived_stmt {
+	DECLS: for decl_node, _ in file.decls do #partial switch decl in decl_node.derived_stmt {
 		case ^ast.Value_Decl:
 			PREPROCESS_VALUE_DECL: {
 				type_string: string = ""
@@ -189,52 +189,14 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 						append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = "" }) } } }
 		case ^ast.Import_Decl:
 			fmt.sbprintln(&import_stmts, node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.Bad_Decl:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Bad_Decl: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Bad_Stmt:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Bad_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Empty_Stmt:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Empty_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Tag_Stmt:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Tag_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Assign_Stmt:
+		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt, ^ast.Range_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.Expr_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.Block_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.If_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.When_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.Defer_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.Range_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.Return_Stmt:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Return_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.For_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.label != nil ? fmt.aprintf("%s: ", node_string(file, decl.label, &external_variable_ident_exprs)) : "", node_string(file, decl, &external_variable_ident_exprs)}))
-		case ^ast.Unroll_Range_Stmt:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Unroll_Range_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Case_Clause:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Case_Clause: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Switch_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", node_string(file, decl, &external_variable_ident_exprs)}))
-		case ^ast.Type_Switch_Stmt:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Type_Switch_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Branch_Stmt:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Branch_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Using_Stmt:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Using_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Package_Decl:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Package_Decl: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Foreign_Block_Decl:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Foreign_Block_Decl: %s.", node_string(file, decl, &external_variable_ident_exprs))
-		case ^ast.Foreign_Import_Decl:
-			return error_handler(General_Error.Preprocessor_Error, "Unhandled Foreign_Import_Decl: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case:
-			return error_handler(General_Error.Preprocessor_Error, "Undandled statement %s of type %T.", node_string(file, decl_node, &external_variable_ident_exprs), decl_node.derived_stmt) }
+			return error_handler(General_Error.Preprocessor_Error, "Undandled declaration %s of type %T.", node_string(file, decl_node, &external_variable_ident_exprs), decl_node.derived_stmt) }
 
 	nl:: proc(sb: ^strings.Builder) { fmt.sbprintln(sb) }
 

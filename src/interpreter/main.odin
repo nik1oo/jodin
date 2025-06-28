@@ -20,6 +20,7 @@ import "core:sys/posix"
 import "core:unicode/utf16"
 import "core:bytes"
 import "core:thread"
+import "internal_pipe"
 import "external_pipe"
 
 
@@ -38,11 +39,12 @@ CELL_ARENA_SIZE::                1 * mem.Megabyte
 
 main:: proc() {
 	err: Error
-	fmt.println("[ interpreter ] jodin: ", "Version: ", VERSION, sep = "")
+	fmt.println(ANSI_GREEN, "[JodinInterpreter]", ANSI_RESET, " jodin: ", "Version: ", VERSION, sep = "")
 	session: ^Session = new(Session)
 	start_session(session)
 	defer end_session(session)
-	connect_to_ipy_kernel(session)
+	err = connect_to_ipy_kernel(session)
+	if err != NOERR { error_handler(err, "Could not connect to jodin kernel."); return }
 	counter: uint = 1
 	for {
 		defer { counter += 1 }
@@ -55,7 +57,8 @@ main:: proc() {
 		else do cell, err = recompile_cell(session, frontend_cell_id, code_raw)
 		os.flush(os.stdout)
 		if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
-		session_stdout, session_stderr, _: = read_session_output(session)
+		session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
+		session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
 		fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")
 		fmt.sbprintln(&response, ANSI_RED, session_stderr, cell_stderr, ANSI_RESET, sep = "")
 		err = external_pipe.write_string(&session.kernel_stdout_pipe, string_or_newline(strings.to_string(response)), external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)

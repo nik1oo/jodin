@@ -26,6 +26,8 @@ KERNEL_SOURCE_PIPE_BUFFER_SIZE = 64 * KILOBYTE
 KERNEL_STDOUT_PIPE_BUFFER_SIZE = 16 * KILOBYTE
 KERNEL_STDERR_PIPE_BUFFER_SIZE = 16 * KILOBYTE
 KERNEL_IOPUB_PIPE_BUFFER_SIZE  = 16 * MEGABYTE
+ANSI_GREEN                     = "\033[2;32m"
+ANSI_RESET                     = "\033[0m"
 
 
 def get_odin_root():
@@ -96,8 +98,10 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
         if os.path.exists(temp_directory): shutil.rmtree(temp_directory)
         self.interpreter_path = 'jodin.exe'
         subprocess.Popen(self.interpreter_path)
+        print_and_flush(ANSI_GREEN + "[JodinKernel]" + ANSI_RESET + " Started jodin interpreter.")
         self.connect_to_server()
         sys.stdout = redirected_stdout
+        print_and_flush(ANSI_GREEN + "[JodinKernel]" + ANSI_RESET + " Started jodin kernel.")
 
 
     def send_message(self, message):
@@ -274,9 +278,8 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
 
 
     def connect_to_server(self):
-        print_and_flush("[ kernel ] Connecting to jodin interpreter...")
         self.code_pipe = External_Pipe(KERNEL_SOURCE_PIPE_NAME, win32file.GENERIC_WRITE, KERNEL_SOURCE_PIPE_BUFFER_SIZE)
         self.stdout_pipe = External_Pipe(KERNEL_STDOUT_PIPE_NAME, win32file.GENERIC_READ, KERNEL_STDOUT_PIPE_BUFFER_SIZE)
         self.message_pipe = External_Pipe(KERNEL_IOPUB_PIPE_NAME, win32file.GENERIC_READ, KERNEL_IOPUB_PIPE_BUFFER_SIZE)
-        print_and_flush("[ kernel ] Done.")
+        print_and_flush(ANSI_GREEN + "[JodinKernel]" + ANSI_RESET + " Connected to jodin interpreter.")
 

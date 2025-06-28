@@ -184,8 +184,9 @@ cell_thread_proc:: proc(cell: ^Cell) {
 
 run_cell_single_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
 	cell_thread_proc(cell)
-	cell_stdout, cell_stderr, _ = read_cell_output(cell)
-	cell_iopub, _ = read_cell_iopub(cell)
+	cell_stdout, _ = internal_pipe.read(&cell.stdout_pipe)
+	cell_stderr, _ = internal_pipe.read(&cell.stderr_pipe)
+	cell_iopub, _ = internal_pipe.read(&cell.iopub_pipe)
 	return cell_stdout, cell_stderr, cell_iopub, NOERR }
 
 
@@ -199,8 +200,9 @@ run_cell_multi_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr
 			thread.terminate(cell_thread, 0)
 			error_handler(os.Error(os.General_Error.Timeout), "Cell timed out.")
 			break } }
-	cell_stdout, cell_stderr, _ = read_cell_output(cell)
-	cell_iopub, _ = read_cell_iopub(cell)
+	cell_stdout, _ = internal_pipe.read(&cell.stdout_pipe)
+	cell_stderr, _ = internal_pipe.read(&cell.stderr_pipe)
+	cell_iopub, _ = internal_pipe.read(&cell.iopub_pipe)
 	thread.destroy(cell_thread)
 	return cell_stdout, cell_stderr, cell_iopub, NOERR }
 
@@ -213,9 +215,44 @@ run_cell:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_
 
 compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	context = cell.cell_context
-	err = write_dll(cell); if err != NOERR do return error_handler(err, "Could not write DLL.")
-	err = compile_dll(cell); if err != NOERR do return error_handler(err, "Could not compile DLL.")
-	err = load_dll(cell); if err != NOERR do return error_handler(err, "Could not load DLL.")
+
+	// WRITE DLL //
+	if os.exists(cell.source_filepath) do os.remove(cell.source_filepath)
+	err = os.write_entire_file_or_err(cell.source_filepath, transmute([]u8)cell.code)
+	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not write DLL to %s.", cell.source_filepath)
+
+	// COMPILE DLL //
+	build_log_filepath: = filepath.join({ cell.session.session_temp_directory, "build_log.txt" })
+	build_command: = fmt.caprintf(`%s build %s %s -file -build-mode:dll -out:%s -linker:lld > "%s" 2>&1`, cell.tags.odin_path, cell.source_filepath, cell.tags.build_args, cell.dll_filepath, build_log_filepath)
+	status: = libc.system(build_command)
+	if status == -1 do return error_handler(General_Error.Spawn_Error, "Could not execture odin build command.")
+	if ! os.exists(cell.dll_filepath) {
+		build_log, err: = os.read_entire_file_from_filename(build_log_filepath)
+		return error_handler(General_Error.Compiler_Error, string(build_log)) }
+	os.remove(build_log_filepath)
+
+	// LOAD DLL //
+	if ! os.exists(cell.dll_filepath) do return error_handler(os.Error(os.General_Error.Not_Exist), "Could not find DLL.")
+	cell.library, cell.loaded = dynlib.load_library(cell.dll_filepath, global_symbols = true)
+	if ! cell.loaded do return error_handler(General_Error.DLL_Error, "Could not load DLL. %s", dynlib.last_error())
+	ptr: rawptr; found: bool
+	ptr, found = dynlib.symbol_address(cell.library, "__init__")
+	if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol __init__.")
+	cell.__init__ = auto_cast ptr
+	ptr, found = dynlib.symbol_address(cell.library, "__main__")
+	if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol __main__.")
+	cell.__main__ = auto_cast ptr
+	ptr, found = dynlib.symbol_address(cell.library, "__update_symmap__")
+	if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol __update_symmap__.")
+	cell.__update_symmap__ = auto_cast ptr
+	ptr, found = dynlib.symbol_address(cell.library, "__apply_symmap__")
+	if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol __apply_symmap__.")
+	cell.__apply_symmap__ = auto_cast ptr
+	for procedure in cell.global_procedures {
+		ptr, found = dynlib.symbol_address(cell.library, procedure.name)
+		if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol %s.", procedure.name)
+		cell.session.__symmap__[procedure.name] = auto_cast ptr }
+
 	return NOERR }
 
 
