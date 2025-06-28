@@ -33,6 +33,7 @@ KERNEL_STDERR_PIPE_BUFFER_SIZE:: 16 * mem.Kilobyte
 KERNEL_IOPUB_PIPE_BUFFER_SIZE::  16 * mem.Megabyte
 CELL_STDOUT_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_STDERR_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
+CELL_ARENA_SIZE::                1 * mem.Megabyte
 
 
 main:: proc() {
@@ -46,12 +47,12 @@ main:: proc() {
 	for {
 		defer { counter += 1 }
 		response, _ := strings.builder_make_len_cap(0, CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
-		cell_id, code_raw, _: = receive_message(session)
+		frontend_cell_id, code_raw, _: = receive_message(session)
 		cell_stdout, cell_stderr, cell_iopub: string
 		if slice.contains([]string{"exit", "quit"}, code_raw) do break
 		cell: ^Cell
-		if cell_id not_in session.cells do cell, err = compile_new_cell(session, cell_id, code_raw, counter)
-		else do cell, err = recompile_cell(session, cell_id, code_raw)
+		if frontend_cell_id not_in session.cells do cell, err = compile_new_cell(session, frontend_cell_id, code_raw, counter)
+		else do cell, err = recompile_cell(session, frontend_cell_id, code_raw)
 		os.flush(os.stdout)
 		if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
 		session_stdout, session_stderr, _: = read_session_output(session)

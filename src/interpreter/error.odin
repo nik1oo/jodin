@@ -37,6 +37,7 @@ General_Error:: enum {
 
 Error:: union {
 	os.Error,
+	runtime.Allocator_Error,
 	General_Error }
 NOERR: Error = os.Error(os.General_Error.None)
 

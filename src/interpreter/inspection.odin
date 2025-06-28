@@ -133,7 +133,7 @@ inspect_detailed:: proc(x: $T) {
 
 
 inspect_allocations:: proc() {
-	fmt.printfln("%s%-16s%s %d", ANSI_BOLD_BLUE, "Allocations:", ANSI_RESET, len(__cell__.allocator.allocation_map))
-	if len(__cell__.allocator.allocation_map) > 0 {
-		for _, entry in __cell__.allocator.allocation_map do fmt.printfln("%s%15X:%s %s(%d:%d): %dB", ANSI_BOLD_BLUE, entry.memory, ANSI_RESET, entry.location.procedure, entry.location.line, entry.location.column, entry.size) } }
+	fmt.printfln("%s%-16s%s %d", ANSI_BOLD_BLUE, "Allocations:", ANSI_RESET, len(__cell__.dll_allocator.allocation_map))
+	if len(__cell__.dll_allocator.allocation_map) > 0 {
+		for _, entry in __cell__.dll_allocator.allocation_map do fmt.printfln("%s%15X:%s %s(%d:%d): %dB", ANSI_BOLD_BLUE, entry.memory, ANSI_RESET, entry.location.procedure, entry.location.line, entry.location.column, entry.size) } }
 

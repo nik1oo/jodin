@@ -1,5 +1,5 @@
 
-package cell_23_24_49_2
+package cell_18_24_07_1
 
 import "shared:jodin"
 import "core:io"
@@ -7,7 +7,6 @@ import "core:os"
 import "base:runtime"
 import "core:fmt"
 import "core:image"
-
 
 @(export) __cell__: ^jodin.Cell = nil
 __stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle
@@ -36,7 +35,7 @@ __symmap__: ^map[string]rawptr = nil
 @(export) __main__:: proc() {
 	context = __cell__.cell_context
 
-	fmt.println("public print")
+
 	os.stdout = __original_stdout__
 	os.stderr = __original_stderr__
 }

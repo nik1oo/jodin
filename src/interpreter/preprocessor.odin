@@ -78,6 +78,7 @@ insert_package_decl:: proc(src, package_name: string) -> (res: string) {
 
 
 preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
+	context = cell.cell_context
 
 	sb:=                            strings.builder_make_len_cap(0, 1 * mem.Megabyte)
 	file_tags:=                     strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
@@ -91,22 +92,22 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 
 	// ASSEMBLE PREPROCESSOR INPUT //
 	src: = insert_package_decl(cell.code_raw, cell.name)
-	// fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
-	// fmt.eprintln(src)
-	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
+	fmt.eprintln(src)
+	fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
 
 	// INITIALIZE PREPROCESSOR //
 	NO_POS:: tokenizer.Pos{}
-	cell.pkg = ast.new_from_positions(ast.Package, NO_POS, NO_POS)
-	cell.pkg.fullpath, _ = filepath.abs(cell.package_filepath)
+	pkg:= ast.new_from_positions(ast.Package, NO_POS, NO_POS)
+	pkg.fullpath, _ = filepath.abs(cell.package_filepath)
 	file: = ast.new(ast.File, NO_POS, NO_POS)
-	file.pkg = cell.pkg
+	file.pkg = pkg
 	file.src = src
 	file.fullpath, _ = filepath.abs(cell.source_filepath)
-	cell.pkg.files[file.fullpath] = file
-	cell.prsr = parser.default_parser()
-	cell.prsr.err, cell.prsr.warn = stub_error_handler, stub_error_handler
-	ok: = parser.parse_file(&cell.prsr, file)
+	pkg.files[file.fullpath] = file
+	prsr:= parser.default_parser()
+	prsr.err, prsr.warn = stub_error_handler, stub_error_handler
+	ok: = parser.parse_file(&prsr, file)
 	if ! ok do return error_handler(General_Error.Preprocessor_Error, "Could not parse file %s.", file.src)
 
 	// COLLECT EXTERNAL VARIABLE IDENT EXPRS //
@@ -132,8 +133,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	ast.walk(v, &file.node)
 
 	// PARSE TAGS //
-	cell.tags.odin_path = "odin"
-	cell.tags.timeout = DEFAULT_CELL_TIMEOUT
 	for tag in file.tags {
 		if strings.starts_with(tag.text, "#+odin ") {
 			cell.tags.odin_path = tag.text[7:] }
@@ -161,14 +160,14 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 								value = node_string(file, value.body, &external_variable_ident_exprs) })
 							break PREPROCESS_VALUE_DECL
 						case ^ast.Basic_Lit:
-							append(&cell.global_constants, node_string(file, decl, &external_variable_ident_exprs))
+							fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs))
 							break PREPROCESS_VALUE_DECL
 						case ^ast.Binary_Expr:
-							append(&cell.global_constants, node_string(file, decl, &external_variable_ident_exprs))
+							fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs))
 							break PREPROCESS_VALUE_DECL
 						case:
 							return error_handler(General_Error.Preprocessor_Error, "Unhandled immutable value declaration %s of type $v.", node_string(file, decl.values[0], &external_variable_ident_exprs), value) }
-					append(&cell.global_constants, node_string(file, decl, &external_variable_ident_exprs)) }
+					fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs)) }
 
 				// MUTABLE //
 				if decl.type != nil do type_string = node_string(file, decl.type, &external_variable_ident_exprs)
@@ -183,7 +182,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 							if inferred_type do return error_handler(General_Error.Preprocessor_Error, correct_raw_code_pos(decl.pos), "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string)
 							else do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = node_string(file, decl.values[i], &external_variable_ident_exprs) })
 						case ^ast.Struct_Type, ^ast.Proc_Lit:
-							append(&cell.global_constants, node_string(file, decl, &external_variable_ident_exprs))
+							fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs))
 						case:
 							return error_handler(General_Error.Preprocessor_Error, "Unhandled mutable value declaration %s of type %T.", node_string(file, decl.values[i], &external_variable_ident_exprs), decl.values[i]) }
 					else {
@@ -199,29 +198,29 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		case ^ast.Tag_Stmt:
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Tag_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Assign_Stmt:
-			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
+			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Expr_Stmt:
-			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
+			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Block_Stmt:
-			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
+			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.If_Stmt:
-			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
+			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.When_Stmt:
-			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
+			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Defer_Stmt:
-			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
+			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Range_Stmt:
-			append(&cell.main_statements, node_string(file, decl_node, &external_variable_ident_exprs))
+			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
 		case ^ast.Return_Stmt:
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Return_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.For_Stmt:
-			append(&cell.main_statements, strings.concatenate({decl.label != nil ? fmt.aprintf("%s: ", node_string(file, decl.label, &external_variable_ident_exprs)) : "", node_string(file, decl, &external_variable_ident_exprs)}))
+			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.label != nil ? fmt.aprintf("%s: ", node_string(file, decl.label, &external_variable_ident_exprs)) : "", node_string(file, decl, &external_variable_ident_exprs)}))
 		case ^ast.Unroll_Range_Stmt:
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Unroll_Range_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Case_Clause:
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Case_Clause: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Switch_Stmt:
-			append(&cell.main_statements, strings.concatenate({decl.partial ? "#partial " : "", node_string(file, decl, &external_variable_ident_exprs)}))
+			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", node_string(file, decl, &external_variable_ident_exprs)}))
 		case ^ast.Type_Switch_Stmt:
 			return error_handler(General_Error.Preprocessor_Error, "Unhandled Type_Switch_Stmt: %s.", node_string(file, decl, &external_variable_ident_exprs))
 		case ^ast.Branch_Stmt:
@@ -251,7 +250,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	fmt.sbprintln(&sb, "import \"shared:jodin\"")
 	fmt.sbprintln(&sb, "import \"core:io\"")
 	fmt.sbprintln(&sb, "import \"core:os\"")
-	for _, other_cell in cell.session.cells do if other_cell.loaded do fmt.sbprintln(&sb, other_cell.import_stmts)
+	for _, other_cell in cell.session.cells do if other_cell.loaded do fmt.sbprintln(&sb, other_cell.imports_string)
 	append(&sb.buf, ..import_stmts.buf[:])
 	nl(&sb)
 
@@ -303,8 +302,8 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl(&sb)
 
 	// GLOBAL CONSTANTS //
-	for _, other_cell in cell.session.cells do if other_cell.loaded do for type in other_cell.global_constants do fmt.sbprintln(&sb, type)
-	for type in cell.global_constants do fmt.sbprintln(&sb, type)
+	for _, other_cell in cell.session.cells do if other_cell.loaded do for type in other_cell.global_constants_string do fmt.sbprintln(&sb, type)
+	for type in cell.global_constants_string do fmt.sbprintln(&sb, type)
 	nl(&sb)
 
 	// INIT PROC //
@@ -327,7 +326,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		"@(export) __main__:: proc() {\n" +
 		"	context = __cell__.cell_context\n")
 	for variable in cell.global_variables do if variable.value != "" do fmt.sbprintfln(&sb, "\t%s = %s", variable.name, variable.value)
-	for expression in cell.main_statements do fmt.sbprintfln(&sb, "\t%s", expression)
+	fmt.sbprintln(&sb, strings.to_string(main_stmts))
 	fmt.sbprintln(&sb,
 		"	os.stdout = __original_stdout__\n" +
 		"	os.stderr = __original_stderr__\n" +
@@ -336,11 +335,12 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	cell.code = strings.to_string(sb)
 
 	// SAVE THINGS FOR OTHER CELLS //
-	cell.import_stmts = strings.to_string(import_stmts)
+	cell.imports_string = strings.to_string(import_stmts)
+	cell.global_constants_string = strings.to_string(global_constant_stmts)
 
-	// fmt.eprintln(ANSI_BLUE, "-----------------------------------------------------")
-	// fmt.eprintln(cell.code)
-	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	fmt.eprintln(ANSI_BLUE, "-----------------------------------------------------")
+	fmt.eprintln(cell.code)
+	fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
 
 	return NOERR }
 

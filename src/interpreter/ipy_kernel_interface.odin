@@ -58,7 +58,7 @@ disconnect_from_ipy_kernel:: proc(session: ^Session) -> (err: Error) {
 	return NOERR }
 
 
-receive_message:: proc(session: ^Session) -> (cell_id: string, message: string, err: Error) {
+receive_message:: proc(session: ^Session) -> (frontend_cell_id: string, message: string, err: Error) {
 	when ODIN_OS == .Windows {
 		n_read: u32
 		buffer: = make([]u8, KERNEL_SOURCE_PIPE_BUFFER_SIZE)

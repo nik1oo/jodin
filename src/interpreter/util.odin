@@ -87,7 +87,7 @@ time_string:: proc() -> string {
 
 
 slice_contains_cell:: proc(cells: []^Cell, cell: ^Cell) -> bool {
-	for other_cell in cells do if other_cell.id == cell.id do return true
+	for other_cell in cells do if other_cell.frontend_cell_id == cell.frontend_cell_id do return true
 	return false }
 
 

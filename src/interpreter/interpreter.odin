@@ -40,6 +40,8 @@ Session:: struct {
 	stream_out:                     io.Stream,
 	stdout_pipe:                    internal_pipe.Internal_Pipe,
 	stderr_pipe:                    internal_pipe.Internal_Pipe,
+
+	// PACKAGE TAGS APPLIED TO ALL CELLS //
 	kernel_source_pipe:             external_pipe.External_Pipe,
 	kernel_stdout_pipe:             external_pipe.External_Pipe,
 	kernel_iopub_pipe:              external_pipe.External_Pipe,
@@ -58,51 +60,6 @@ write_to_message_pipe:: proc(session: ^Session, message: Message) -> (err: Error
 	err = external_pipe.write_bytes(&session.kernel_iopub_pipe, message)
 	if err != NOERR do return error_handler(err, "Could not write to message pipe.")
 	return NOERR }
-
-
-init_cell:: proc(cell: ^Cell, cell_id: string, code_raw: string, index: uint = 0) -> (err: Error) {
-	session: = cell.session
-	cell.id = strings.clone(cell_id)
-	cell.name = fmt.aprintf("cell_%s_%d", time_string(), index)
-	cell.package_filepath = filepath.join({session.session_temp_directory, fmt.aprintf("%s", cell.name)})
-	cell.source_filepath = filepath.join({session.session_temp_directory, cell.name, fmt.aprintf("%s.odin", cell.name)})
-	cell.dll_filepath = filepath.join({session.session_temp_directory, cell.name, fmt.aprintf("%s.dll", cell.name)})
-	cell.code_raw = code_raw
-	cell.loaded = false
-	cell.cell_context = runtime.default_context()
-	cell.cell_context.user_index = 1234
-	mem.tracking_allocator_init(&cell.allocator, runtime.heap_allocator())
-	cell.cell_context.allocator = mem.tracking_allocator(&cell.allocator)
-	mem.scratch_allocator_init(&cell.temp_allocator, runtime.DEFAULT_TEMP_ALLOCATOR_BACKING_SIZE, cell.cell_context.allocator)
-	cell.cell_context.temp_allocator = mem.scratch_allocator(&cell.temp_allocator)
-	err = os.make_directory(cell.package_filepath)
-	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not make directory %s.", cell.package_filepath)
-	err = os.write_entire_file_or_err(cell.source_filepath, transmute([]u8)cell.code_raw)
-	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not write to %s.", cell.source_filepath)
-	err = internal_pipe.init(&cell.stdout_pipe, KERNEL_STDOUT_PIPE_BUFFER_SIZE)
-	if err != NOERR do return error_handler(err, "Could not create stdout pipe.")
-	err = internal_pipe.init(&cell.stderr_pipe, KERNEL_STDERR_PIPE_BUFFER_SIZE)
-	if err != NOERR do return error_handler(err, "Could not create stderr pipe.")
-	err = internal_pipe.init(&cell.iopub_pipe, KERNEL_IOPUB_PIPE_BUFFER_SIZE)
-	if err != NOERR do return error_handler(err, "Could not create iopub pipe.")
-	return NOERR }
-reinit_cell:: proc(cell: ^Cell, code_raw: string) -> Error {
-	cell.code_raw = code_raw
-	cell.loaded = false
-	clear_dynamic_array(&cell.package_directives)
-	clear_dynamic_array(&cell.global_constants)
-	clear_dynamic_array(&cell.global_variables)
-	clear_dynamic_array(&cell.main_statements)
-	cell.import_stmts = ""
-	os.remove(cell.source_filepath)
-	err: Error = os.write_entire_file_or_err(cell.source_filepath, transmute([]u8)cell.code_raw)
-	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not write to %s.", cell.source_filepath)
-	return NOERR }
-
-
-destroy_cell:: proc(cell: ^Cell) {
-	// TODO
-}
 
 
 start_session:: proc(session: ^Session) -> (err: Error) {
@@ -258,6 +215,7 @@ run_cell_multi_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr
 
 
 run_cell:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
+	context = cell.cell_context
 	return run_cell_multi_threaded(cell) }
 	// return run_cell_single_threaded(cell) }
 
@@ -267,27 +225,29 @@ variable_is_pointer:: proc(variable: Variable) -> bool {
 
 
 compile_cell:: proc(cell: ^Cell) -> (err: Error) {
+	context = cell.cell_context
 	err = write_dll(cell); if err != NOERR do return error_handler(err, "Could not write DLL.")
 	err = compile_dll(cell); if err != NOERR do return error_handler(err, "Could not compile DLL.")
 	err = load_dll(cell); if err != NOERR do return error_handler(err, "Could not load DLL.")
 	return NOERR }
 
 
-compile_new_cell:: proc(session: ^Session, cell_id: string, code_raw: string, index: uint = 0) -> (cell: ^Cell, err: Error) {
+compile_new_cell:: proc(session: ^Session, frontend_cell_id: string, code_raw: string, index: uint = 0) -> (cell: ^Cell, err: Error) {
 	cell = new(Cell)
-	cell.session = session
-	err = init_cell(cell, cell_id, code_raw, index); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
+	err = init_cell(cell, session, frontend_cell_id, code_raw, index); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
+	context = cell.cell_context
 	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
 	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
 	// fmt.println(cell.code)
-	session.cells[cell_id] = cell
+	session.cells[frontend_cell_id] = cell
 	return cell, NOERR }
 
 
-recompile_cell:: proc(session: ^Session, cell_id, code_raw: string) -> (cell: ^Cell, err: Error) {
-	cell = session.cells[cell_id]
+recompile_cell:: proc(session: ^Session, frontend_cell_id, code_raw: string) -> (cell: ^Cell, err: Error) {
+	cell = session.cells[frontend_cell_id]
+	context = cell.cell_context
 	if cell.loaded do unload_dll(cell)
-	err = reinit_cell(cell, code_raw); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
+	err = restart_cell(cell, code_raw); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
 	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
 	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
 	// determine_dependers(cell)
