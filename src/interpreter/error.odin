@@ -20,6 +20,7 @@ import "core:sys/posix"
 import "core:unicode/utf16"
 import "core:bytes"
 import "core:thread"
+import "core:image"
 
 
 General_Error:: enum {
@@ -38,7 +39,8 @@ General_Error:: enum {
 Error:: union {
 	os.Error,
 	runtime.Allocator_Error,
-	General_Error }
+	General_Error,
+	image.Error }
 NOERR: Error = os.Error(os.General_Error.None)
 
 
