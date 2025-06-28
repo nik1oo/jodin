@@ -131,7 +131,8 @@ restart_cell:: proc(cell: ^Cell, code_raw: string) -> (err: Error) {
 	clear_dynamic_array(&cell.strong_dependers)
 
 	// DLL //
-	dynlib.unload_library(cell.library)
+	// DICK
+	if cell.loaded do dynlib.unload_library(cell.library)
 	cell.compiled = false
 	cell.loaded = false
 	cell.compilation_count += 1
@@ -172,4 +173,70 @@ destroy_cell:: proc(cell: ^Cell) {
 
 	free_all(cell.cell_context.allocator)
 	free_all(cell.cell_context.temp_allocator) }
+
+
+cell_thread_proc:: proc(cell: ^Cell) {
+	cell.__init__(cell, auto_cast cell.stdout_pipe.input_handle, auto_cast cell.stderr_pipe.input_handle, auto_cast cell.iopub_pipe.input_handle, &cell.session.__symmap__)
+	cell.__apply_symmap__()
+	cell.__main__()
+	cell.__update_symmap__() }
+
+
+run_cell_single_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
+	cell_thread_proc(cell)
+	cell_stdout, cell_stderr, _ = read_cell_output(cell)
+	cell_iopub, _ = read_cell_iopub(cell)
+	return cell_stdout, cell_stderr, cell_iopub, NOERR }
+
+
+run_cell_multi_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
+	cell_thread: = thread.create_and_start_with_poly_data(cell, cell_thread_proc, init_context = context, priority = .Normal, self_cleanup = false)
+	if cell_thread == nil do return "", "", "", error_handler(General_Error.Spawn_Error, "Failed to spawn cell thread.")
+	timer: time.Stopwatch
+	time.stopwatch_start(&timer)
+	for ! thread.is_done(cell_thread) {
+		if int(time.duration_seconds(time.stopwatch_duration(timer))) >= cell.tags.timeout {
+			thread.terminate(cell_thread, 0)
+			error_handler(os.Error(os.General_Error.Timeout), "Cell timed out.")
+			break } }
+	cell_stdout, cell_stderr, _ = read_cell_output(cell)
+	cell_iopub, _ = read_cell_iopub(cell)
+	thread.destroy(cell_thread)
+	return cell_stdout, cell_stderr, cell_iopub, NOERR }
+
+
+run_cell:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
+	context = cell.cell_context
+	return run_cell_multi_threaded(cell) }
+	// return run_cell_single_threaded(cell) }
+
+
+compile_cell:: proc(cell: ^Cell) -> (err: Error) {
+	context = cell.cell_context
+	err = write_dll(cell); if err != NOERR do return error_handler(err, "Could not write DLL.")
+	err = compile_dll(cell); if err != NOERR do return error_handler(err, "Could not compile DLL.")
+	err = load_dll(cell); if err != NOERR do return error_handler(err, "Could not load DLL.")
+	return NOERR }
+
+
+compile_new_cell:: proc(session: ^Session, frontend_cell_id: string, code_raw: string, index: uint = 0) -> (cell: ^Cell, err: Error) {
+	cell = new(Cell)
+	err = init_cell(cell, session, frontend_cell_id, code_raw, index); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
+	context = cell.cell_context
+	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
+	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
+	// fmt.println(cell.code)
+	session.cells[frontend_cell_id] = cell
+	return cell, NOERR }
+
+
+recompile_cell:: proc(session: ^Session, frontend_cell_id, code_raw: string) -> (cell: ^Cell, err: Error) {
+	cell = session.cells[frontend_cell_id]
+	context = cell.cell_context
+	err = restart_cell(cell, code_raw); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
+	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
+	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
+	// determine_dependers(cell)
+	// recompile_dependers(cell)
+	return cell, NOERR }
 

@@ -32,21 +32,30 @@ Procedure:: struct { name: string, type: string, value: string }
 
 // INTERPRETER SESSION //
 Session:: struct {
+	// ID //
 	name:                           string,
+
+	// CELLS //
 	cells:                          map[string]^Cell,
+
+	// HANDLES BACKUP //
 	os_stdout:                      os.Handle,
 	os_stderr:                      os.Handle,
-	stream_in:                      io.Stream,
-	stream_out:                     io.Stream,
+
+	// HANDLES REROUTES //
 	stdout_pipe:                    internal_pipe.Internal_Pipe,
 	stderr_pipe:                    internal_pipe.Internal_Pipe,
 
-	// PACKAGE TAGS APPLIED TO ALL CELLS //
+	// PIPES TO KERNEL //
 	kernel_source_pipe:             external_pipe.External_Pipe,
 	kernel_stdout_pipe:             external_pipe.External_Pipe,
 	kernel_iopub_pipe:              external_pipe.External_Pipe,
+
+	// DIRECTORY //
 	session_temp_directory:         string,
 	session_temp_directory_handle:  os.Handle,
+
+	// SYMBOL-MAP //
 	__symmap__:                     map[string]rawptr }
 
 
@@ -67,8 +76,6 @@ start_session:: proc(session: ^Session) -> (err: Error) {
 	session.name = fmt.aprintf("session_%s", time_string())
 	session.os_stdout = os.stdout
 	session.os_stderr = os.stderr
-	session.stream_in = os.stream_from_handle(os.stdin)
-	session.stream_out = os.stream_from_handle(os.stdout)
 	err = internal_pipe.init(&session.stdout_pipe, CELL_STDOUT_PIPE_BUFFER_SIZE)
 	if err != NOERR do return error_handler(err, "Could not create stdout pipe.")
 	err = internal_pipe.init(&session.stderr_pipe, CELL_STDERR_PIPE_BUFFER_SIZE)
@@ -184,73 +191,6 @@ stdout_to_console:: proc(session: ^Session) -> (err: Error) {
 	return NOERR }
 
 
-cell_thread_proc:: proc(cell: ^Cell) {
-	cell.__init__(cell, auto_cast cell.stdout_pipe.input_handle, auto_cast cell.stderr_pipe.input_handle, auto_cast cell.iopub_pipe.input_handle, &cell.session.__symmap__)
-	cell.__apply_symmap__()
-	cell.__main__()
-	cell.__update_symmap__() }
-
-
-run_cell_single_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
-	cell_thread_proc(cell)
-	cell_stdout, cell_stderr, _ = read_cell_output(cell)
-	cell_iopub, _ = read_cell_iopub(cell)
-	return cell_stdout, cell_stderr, cell_iopub, NOERR }
-
-
-run_cell_multi_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
-	cell_thread: = thread.create_and_start_with_poly_data(cell, cell_thread_proc, init_context = context, priority = .Normal, self_cleanup = false)
-	if cell_thread == nil do return "", "", "", error_handler(General_Error.Spawn_Error, "Failed to spawn cell thread.")
-	timer: time.Stopwatch
-	time.stopwatch_start(&timer)
-	for ! thread.is_done(cell_thread) {
-		if int(time.duration_seconds(time.stopwatch_duration(timer))) >= cell.tags.timeout {
-			thread.terminate(cell_thread, 0)
-			error_handler(os.Error(os.General_Error.Timeout), "Cell timed out.")
-			break } }
-	cell_stdout, cell_stderr, _ = read_cell_output(cell)
-	cell_iopub, _ = read_cell_iopub(cell)
-	thread.destroy(cell_thread)
-	return cell_stdout, cell_stderr, cell_iopub, NOERR }
-
-
-run_cell:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
-	context = cell.cell_context
-	return run_cell_multi_threaded(cell) }
-	// return run_cell_single_threaded(cell) }
-
-
 variable_is_pointer:: proc(variable: Variable) -> bool {
 	return (len(variable.type) > 0 && variable.type[0] == '^') }
-
-
-compile_cell:: proc(cell: ^Cell) -> (err: Error) {
-	context = cell.cell_context
-	err = write_dll(cell); if err != NOERR do return error_handler(err, "Could not write DLL.")
-	err = compile_dll(cell); if err != NOERR do return error_handler(err, "Could not compile DLL.")
-	err = load_dll(cell); if err != NOERR do return error_handler(err, "Could not load DLL.")
-	return NOERR }
-
-
-compile_new_cell:: proc(session: ^Session, frontend_cell_id: string, code_raw: string, index: uint = 0) -> (cell: ^Cell, err: Error) {
-	cell = new(Cell)
-	err = init_cell(cell, session, frontend_cell_id, code_raw, index); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
-	context = cell.cell_context
-	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
-	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
-	// fmt.println(cell.code)
-	session.cells[frontend_cell_id] = cell
-	return cell, NOERR }
-
-
-recompile_cell:: proc(session: ^Session, frontend_cell_id, code_raw: string) -> (cell: ^Cell, err: Error) {
-	cell = session.cells[frontend_cell_id]
-	context = cell.cell_context
-	if cell.loaded do unload_dll(cell)
-	err = restart_cell(cell, code_raw); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
-	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
-	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
-	// determine_dependers(cell)
-	// recompile_dependers(cell)
-	return cell, NOERR }
 

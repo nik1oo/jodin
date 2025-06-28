@@ -1,21 +1,26 @@
 
-package cell_20_33_42_1
+package cell_20_58_03_2
 
 import "shared:jodin"
 import "core:io"
 import "core:os"
+
+
 import "base:runtime"
 import "core:fmt"
 import "core:image"
+
 
 @(export) __cell__: ^jodin.Cell = nil
 __stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle
 __symmap__: ^map[string]rawptr = nil
 
+x: int
 
 
 
 @(export) __update_symmap__:: proc() {
+	__symmap__["x"] = auto_cast &x
 }
 @(export) __apply_symmap__:: proc() {
 }
@@ -35,6 +40,7 @@ __symmap__: ^map[string]rawptr = nil
 @(export) __main__:: proc() {
 	context = __cell__.cell_context
 
+	x = 20
 
 	os.stdout = __original_stdout__
 	os.stderr = __original_stderr__

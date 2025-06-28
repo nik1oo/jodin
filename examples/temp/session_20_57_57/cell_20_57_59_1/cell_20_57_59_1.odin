@@ -1,5 +1,5 @@
 
-package cell_20_33_43_2
+package cell_20_57_59_1
 
 import "shared:jodin"
 import "core:io"
@@ -7,7 +7,6 @@ import "core:os"
 import "base:runtime"
 import "core:fmt"
 import "core:image"
-
 
 @(export) __cell__: ^jodin.Cell = nil
 __stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle
@@ -36,8 +35,6 @@ __symmap__: ^map[string]rawptr = nil
 @(export) __main__:: proc() {
 	context = __cell__.cell_context
 
-	 jodin.display_image(`small-jupyter.png`)
-	 jodin.display_image(`small-jupyter.jpg`)
 
 	os.stdout = __original_stdout__
 	os.stderr = __original_stderr__

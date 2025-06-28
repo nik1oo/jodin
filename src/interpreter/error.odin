@@ -40,34 +40,34 @@ Error:: union {
 	runtime.Allocator_Error,
 	General_Error,
 	image.Error }
-NOERR: Error = os.Error(os.General_Error.None)
+@(private) NOERR: Error = os.Error(os.General_Error.None)
 
 
-error_handler:: proc { error_handler_from_source_code_location, error_handler_from_source_code_location_sb, error_handler_from_tokenizer_pos }
-error_handler_from_source_code_location_sb:: proc(sb: ^strings.Builder, err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
+@(private) error_handler:: proc { error_handler_from_source_code_location, error_handler_from_source_code_location_sb, error_handler_from_tokenizer_pos }
+@(private) error_handler_from_source_code_location_sb:: proc(sb: ^strings.Builder, err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
 	if err == NOERR do return err
 	fmt.sbprintf(sb, "%v: %s(%d:%d): ", err, loc.file_path, loc.line, loc.column)
 	fmt.sbprintfln(sb, msg, ..args)
 	return err }
-error_handler_from_source_code_location:: proc(err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
+@(private) error_handler_from_source_code_location:: proc(err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
 	if err == NOERR do return err
 	fmt.eprintf("%v: %s(%d:%d): ", err, loc.file_path, loc.line, loc.column)
 	fmt.eprintfln(msg, ..args)
 	return err }
-error_handler_from_tokenizer_pos:: proc(err: Error, loc: tokenizer.Pos, msg: string, args: ..any) -> Error {
+@(private) error_handler_from_tokenizer_pos:: proc(err: Error, loc: tokenizer.Pos, msg: string, args: ..any) -> Error {
 	if err == NOERR do return err
 	return error_handler_from_source_code_location(err, msg, ..args, loc = source_code_location_from_tokenizer_pos(loc)) }
 
 
-assert_handler:: proc { assert_handler_from_source_code_location, assert_handler_from_tokenizer_pos }
-assert_handler_from_source_code_location:: proc(condition: bool, err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
+@(private) assert_handler:: proc { assert_handler_from_source_code_location, assert_handler_from_tokenizer_pos }
+@(private) assert_handler_from_source_code_location:: proc(condition: bool, err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
 	if condition do return NOERR
 	else do return error_handler_from_source_code_location(err, msg, ..args, loc = loc) }
-assert_handler_from_tokenizer_pos:: proc(condition: bool, err: Error, loc: tokenizer.Pos, msg: string, args: ..any) -> Error {
+@(private) assert_handler_from_tokenizer_pos:: proc(condition: bool, err: Error, loc: tokenizer.Pos, msg: string, args: ..any) -> Error {
 	if condition do return NOERR
 	else do return error_handler_from_tokenizer_pos(err, loc, msg, ..args) }
 
 
-source_code_location_from_tokenizer_pos:: proc(pos: tokenizer.Pos) -> runtime.Source_Code_Location {
+@(private) source_code_location_from_tokenizer_pos:: proc(pos: tokenizer.Pos) -> runtime.Source_Code_Location {
 	return runtime.Source_Code_Location{ file_path = pos.file, line = auto_cast pos.line, column = auto_cast pos.column } }
 

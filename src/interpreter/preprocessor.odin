@@ -92,9 +92,9 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 
 	// ASSEMBLE PREPROCESSOR INPUT //
 	src: = insert_package_decl(cell.code_raw, cell.name)
-	fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
-	fmt.eprintln(src)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	// fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
+	// fmt.eprintln(src)
+	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
 
 	// INITIALIZE PREPROCESSOR //
 	NO_POS:: tokenizer.Pos{}
@@ -338,9 +338,9 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	cell.imports_string = strings.to_string(import_stmts)
 	cell.global_constants_string = strings.to_string(global_constant_stmts)
 
-	fmt.eprintln(ANSI_BLUE, "-----------------------------------------------------")
-	fmt.eprintln(cell.code)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	// fmt.eprintln(ANSI_BLUE, "-----------------------------------------------------")
+	// fmt.eprintln(cell.code)
+	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
 
 	return NOERR }
 
