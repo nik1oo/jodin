@@ -74,6 +74,7 @@ start_session:: proc(session: ^Session) -> (err: Error) {
 	if ! os.exists(session.session_temp_directory) {
 		err = os.Error(os.make_directory(session.session_temp_directory, os.O_RDWR))
 		if err != os.Error(os.General_Error.None) do return error_handler(err, "Couldn't create temp folder %s.", session.session_temp_directory) }
+	session_output_to_console(session)
 	return NOERR }
 
 
@@ -82,16 +83,17 @@ end_session:: proc(session: ^Session) -> (err: Error) {
 	return disconnect_from_ipy_kernel(session) }
 
 
-session_stderr_to_frontend:: proc(session: ^Session) -> (err: Error) {
-	if session.stderr_pipe.input_handle == os.INVALID_HANDLE do return os.Error(os.General_Error.Closed)
-	os.stderr = auto_cast session.stderr_pipe.input_handle; return NOERR }
-session_stdout_to_frontend:: proc(session: ^Session) -> (err: Error) {
-	if session.stdout_pipe.input_handle == os.INVALID_HANDLE do return os.Error(os.General_Error.Closed)
-	os.stdout = auto_cast session.stdout_pipe.input_handle; return NOERR }
-session_stderr_to_console:: proc(session: ^Session) -> (err: Error) {
-	os.stderr = session.os_stderr; return NOERR }
-session_stdout_to_console:: proc(session: ^Session) -> (err: Error) {
-	os.stdout = session.os_stdout; return NOERR }
+session_output_to_frontend:: proc(session: ^Session) -> (err: Error) {
+	err = os.Error(os.General_Error.Closed)
+	if session.stdout_pipe.input_handle != os.INVALID_HANDLE do os.stdout = auto_cast session.stdout_pipe.input_handle
+	else do return
+	if session.stderr_pipe.input_handle != os.INVALID_HANDLE do os.stderr = auto_cast session.stderr_pipe.input_handle
+	else do return
+	return NOERR }
+session_output_to_console:: proc(session: ^Session) -> (err: Error) {
+	os.stderr = session.os_stderr
+	os.stdout = session.os_stdout
+	return NOERR }
 
 
 variable_is_pointer:: proc(variable: Variable) -> bool {

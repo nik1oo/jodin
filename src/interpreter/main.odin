@@ -25,7 +25,7 @@ import "external_pipe"
 
 
 VERSION::                        "0.1.0-alpha"
-DEFAULT_CELL_TIMEOUT::           10
+DEFAULT_CELL_TIMEOUT::           5
 PIPE_TIMEOUT::                   10 * time.Second
 PIPE_DELAY::                     100 * time.Millisecond
 KERNEL_SOURCE_PIPE_BUFFER_SIZE:: 64 * mem.Kilobyte
@@ -48,8 +48,10 @@ main:: proc() {
 	counter: uint = 1
 	for {
 		defer { counter += 1 }
+		session_output_to_console(session)
 		response, _ := strings.builder_make_len_cap(0, CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
 		frontend_cell_id, code_raw, _: = receive_message(session)
+		session_output_to_frontend(session)
 		cell_stdout, cell_stderr, cell_iopub: string
 		if slice.contains([]string{"exit", "quit"}, code_raw) do break
 		cell: ^Cell
@@ -57,6 +59,7 @@ main:: proc() {
 		else do cell, err = recompile_cell(session, frontend_cell_id, code_raw)
 		os.flush(os.stdout)
 		if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
+		copy_stderr(session.stderr_pipe.input_handle)
 		session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
 		session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
 		fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")

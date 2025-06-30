@@ -191,6 +191,7 @@ run_cell_single_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stder
 
 
 run_cell_multi_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
+	// TODO Pass `cell.cell_context` to `init_context` argument, instead of setting it manually in the thread's `__init__` proc. //
 	cell_thread: = thread.create_and_start_with_poly_data(cell, cell_thread_proc, init_context = context, priority = .Normal, self_cleanup = false)
 	if cell_thread == nil do return "", "", "", error_handler(General_Error.Spawn_Error, "Failed to spawn cell thread.")
 	timer: time.Stopwatch
@@ -258,10 +259,10 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 
 compile_new_cell:: proc(session: ^Session, frontend_cell_id: string, code_raw: string, index: uint = 0) -> (cell: ^Cell, err: Error) {
 	cell = new(Cell)
-	err = init_cell(cell, session, frontend_cell_id, code_raw, index); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
+	err = init_cell(cell, session, frontend_cell_id, code_raw, index); if err != NOERR do return cell, err
 	context = cell.cell_context
-	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
-	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
+	err = preprocess_cell(cell); if err != NOERR do return cell, err
+	err = compile_cell(cell); if err != NOERR do return cell, err
 	// fmt.println(cell.code)
 	session.cells[frontend_cell_id] = cell
 	return cell, NOERR }
@@ -270,9 +271,9 @@ compile_new_cell:: proc(session: ^Session, frontend_cell_id: string, code_raw: s
 recompile_cell:: proc(session: ^Session, frontend_cell_id, code_raw: string) -> (cell: ^Cell, err: Error) {
 	cell = session.cells[frontend_cell_id]
 	context = cell.cell_context
-	err = restart_cell(cell, code_raw); if err != NOERR do return cell, error_handler(err, "Cell initialization failed.")
-	err = preprocess_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell preprocessing failed.")
-	err = compile_cell(cell); if err != NOERR do return cell, error_handler(err, "Cell compilation failed.")
+	err = restart_cell(cell, code_raw); if err != NOERR do return cell, err
+	err = preprocess_cell(cell); if err != NOERR do return cell, err
+	err = compile_cell(cell); if err != NOERR do return cell, err
 	// determine_dependers(cell)
 	// recompile_dependers(cell)
 	return cell, NOERR }

@@ -35,6 +35,16 @@ General_Error:: enum {
 	DLL_Error }
 
 
+// Erros come form:
+//  * python kernel, printed to the stdout stream of the kernel process.
+//  * jodin interpreter, printed to os.stdout. [ ok ]
+//  * compiler, printed to compiler log file [ ok ]
+//  * cell, printed to the cell's stdout pipe. [ ok ]
+//  * odin runtime error handler, printed directly to stderr, redirected to os.stderr.
+
+INTERPRETER_ERROR_PREFIX:: ANSI_RED + "[JodinInterpreter]" + ANSI_RESET
+
+
 Error:: union {
 	os.Error,
 	runtime.Allocator_Error,
@@ -46,12 +56,12 @@ Error:: union {
 @(private) error_handler:: proc { error_handler_from_source_code_location, error_handler_from_source_code_location_sb, error_handler_from_tokenizer_pos }
 @(private) error_handler_from_source_code_location_sb:: proc(sb: ^strings.Builder, err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
 	if err == NOERR do return err
-	fmt.sbprintf(sb, "%v: %s(%d:%d): ", err, loc.file_path, loc.line, loc.column)
+	fmt.sbprintf(sb, "%s %v: %s(%d:%d): ", INTERPRETER_ERROR_PREFIX, err, loc.file_path, loc.line, loc.column)
 	fmt.sbprintfln(sb, msg, ..args)
 	return err }
 @(private) error_handler_from_source_code_location:: proc(err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
 	if err == NOERR do return err
-	fmt.eprintf("%v: %s(%d:%d): ", err, loc.file_path, loc.line, loc.column)
+	fmt.eprintf("%s %v: %s(%d:%d): ", INTERPRETER_ERROR_PREFIX, err, loc.file_path, loc.line, loc.column)
 	fmt.eprintfln(msg, ..args)
 	return err }
 @(private) error_handler_from_tokenizer_pos:: proc(err: Error, loc: tokenizer.Pos, msg: string, args: ..any) -> Error {
@@ -70,4 +80,11 @@ Error:: union {
 
 @(private) source_code_location_from_tokenizer_pos:: proc(pos: tokenizer.Pos) -> runtime.Source_Code_Location {
 	return runtime.Source_Code_Location{ file_path = pos.file, line = auto_cast pos.line, column = auto_cast pos.column } }
+
+
+@(private) copy_stderr:: proc(dest: os.Handle) {
+	stderr_handle := os.get_std_handle(uint(windows.STD_ERROR_HANDLE))
+	data, _: = os.read_entire_file_from_handle_or_err(stderr_handle)
+	fmt.eprintln("read", len(data), "bytes from stderr.")
+	os.write(dest, data) }
 

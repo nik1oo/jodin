@@ -264,7 +264,7 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
         if self.send_message(cell_id + '\n' + code):
             stdout_message, message_message = (self.stdout_pipe.read_string(), self.message_pipe.read_bytes())
             self.send_response_stream('stdout', stdout_message)
-            self.parse_message_stream(message_message)
+            if message_message != None: self.parse_message_stream(message_message)
         else:
             self.send_response_stream('stdout', "Error: Could not send message to jodin.")
         return {'status': 'ok',

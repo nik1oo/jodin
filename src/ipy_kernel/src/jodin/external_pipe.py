@@ -41,13 +41,15 @@ class External_Pipe:
 
 
     def read_string(self):
-        return self.read_bytes().decode().strip()
+        bytes_read = self.read_bytes()
+        if bytes_read == None: return ""
+        else: return bytes_read.decode().strip()
 
 
     def read_bytes(self):
         if self.os == "Windows":
             start_time = time.time_ns()
-            result = ""
+            result = None
             while (time.time_ns() - start_time) < DEFAULT_TIMEOUT:
                 try: result = win32file.ReadFile(self.handle, self.size)[1]
                 except:
