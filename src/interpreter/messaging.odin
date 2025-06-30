@@ -62,7 +62,7 @@ Display_Data_Message_Header:: struct #packed {
 	width, height: u16,
 	expanded:      bool,
 	display_id:    [32]u8 }
-@(private) make_display_data_message:: proc(data: []u8, mime_type: string, width: uint = 0, height: uint = 0, expanded: bool = true, display_id: string) -> Message {
+@(private) make_display_data_message:: proc(data: []u8, mime_type: string, width: uint = 0, height: uint = 0, expanded: bool = true, display_id: string = "") -> Message {
 	assert(len(mime_type) <= 32)
 	header_size: = size_of(Display_Data_Message_Header)
 	message_size: = header_size + len(data)
@@ -76,12 +76,12 @@ Display_Data_Message_Header:: struct #packed {
 	copy_slice(message[0:header_size], reflect.as_bytes(header))
 	copy_slice(message[header_size:message_size], transmute([]u8)data[:])
 	return message }
-display_data:: proc(data: []u8, mime_type: string, width: uint = 0, height: uint = 0, expanded: bool = true, display_id: string) -> Error {
+display_data:: proc(data: []u8, mime_type: string, width: uint = 0, height: uint = 0, expanded: bool = true, display_id: string = "") -> Error {
 	return send_message(make_display_data_message(data, mime_type, width, height, expanded, display_id)) }
 
 
 Update_Display_Data_Message_Header:: Display_Data_Message_Header
-@(private) make_update_display_data_message:: proc(data: []u8, mime_type: string, width: uint = 0, height: uint = 0, expanded: bool = true, display_id: string) -> Message {
+@(private) make_update_display_data_message:: proc(data: []u8, mime_type: string, width: uint = 0, height: uint = 0, expanded: bool = true, display_id: string = "") -> Message {
 	assert(len(mime_type) <= 32)
 	header_size: = size_of(Update_Display_Data_Message_Header)
 	message_size: = header_size + len(data)
@@ -95,7 +95,7 @@ Update_Display_Data_Message_Header:: Display_Data_Message_Header
 	copy_slice(message[0:header_size], reflect.as_bytes(header))
 	copy_slice(message[header_size:message_size], transmute([]u8)data[:])
 	return message }
-@(private) send_update_display_data_message:: proc(data: []u8, mime_type: string, width: uint = 0, height: uint = 0, expanded: bool = true, display_id: string) -> Error {
+@(private) send_update_display_data_message:: proc(data: []u8, mime_type: string, width: uint = 0, height: uint = 0, expanded: bool = true, display_id: string = "") -> Error {
 	return send_message(make_update_display_data_message(data, mime_type, width, height, expanded, display_id)) }
 
 

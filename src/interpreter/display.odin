@@ -31,12 +31,37 @@ Image_Format:: enum u8 { PNG, JPEG, GIF, WEBP }
 	Image_Format.WEBP = "image/webp" }
 
 
-display_image:: proc{ display_image_from_raw_data, display_image_from_filepath }
-display_image_from_raw_data:: proc(data: []u8, format: Image_Format, size: [2]uint, display_id: string = "", loc: = #caller_location) -> (err: Error) {
+display_image:: proc{ display_image_from_data_and_format_and_size, display_image_from_data_and_format, display_image_from_filepath, display_image_from_filepath_and_size }
+display_image_from_data_and_format_and_size:: proc(data: []u8, format: Image_Format, size: [2]uint, display_id: string = "", loc: = #caller_location) -> (err: Error) {
 	if data == nil do return error_handler(General_Error.Data_Empty, "Data is nil.")
 	if format > .WEBP do return error_handler(General_Error.Invalid_Format, "Invalid image format.")
 	if size.x == 0 || size.y == 0 do return error_handler(General_Error.Invalid_Argument, "Invalid image dimensions")
 	return display_data(data, IMAGE_MIME_TYPES[format], auto_cast size.x, auto_cast size.y, display_id = display_id) }
+
+
+display_image_from_data_and_format:: proc(data: []u8, format: Image_Format, display_id: string = "", loc: = #caller_location) -> (err: Error) {
+	#partial switch format {
+		case .PNG:
+			im: ^image.Image
+			im, err = png.load_from_bytes(data, image.Options{.return_metadata, .do_not_decompress_image})
+			return display_image_from_data_and_format_and_size(data, Image_Format.PNG, [2]uint{cast(uint)im.width, cast(uint)im.height}, display_id, loc)
+		case .JPEG:
+			im: ^image.Image
+			im, err = jpeg.load_from_bytes(data, image.Options{.return_metadata, .do_not_decompress_image})
+			return display_image_from_data_and_format_and_size(data, Image_Format.JPEG, [2]uint{cast(uint)im.width, cast(uint)im.height}, display_id, loc)
+		case: return General_Error.Invalid_Format } }
+
+
+display_image_from_filepath_and_size:: proc(path: string, size: [2]uint, display_id: string = "", loc: = #caller_location) -> (err: Error) {
+	data, _: = os.read_entire_file_from_filename_or_err(path)
+	format: Image_Format
+	switch filepath.ext(path) {
+		case ".png": format = .PNG
+		case ".jpg", ".jpeg": format = .JPEG
+		case ".gif": format = .GIF
+		case ".webp": format = .WEBP
+		case: return General_Error.Invalid_Format }
+	return display_image_from_data_and_format_and_size(data, format, size, display_id, loc) }
 
 
 display_image_from_filepath:: proc(path: string, display_id: string = "", loc: = #caller_location) -> (err: Error) {
@@ -45,14 +70,11 @@ display_image_from_filepath:: proc(path: string, display_id: string = "", loc: =
 			data, _: = os.read_entire_file_from_filename_or_err(path)
 			im: ^image.Image
 			im, err = png.load_from_bytes(data, image.Options{.return_metadata, .do_not_decompress_image})
-			// if err != NOERR do return err
-			return display_image_from_raw_data(data, Image_Format.PNG, [2]uint{cast(uint)im.width, cast(uint)im.height}, display_id, loc)
+			return display_image_from_data_and_format_and_size(data, Image_Format.PNG, [2]uint{cast(uint)im.width, cast(uint)im.height}, display_id, loc)
 		case ".jpg", ".jpeg":
 			data, _: = os.read_entire_file_from_filename_or_err(path)
 			im: ^image.Image
 			im, err = jpeg.load_from_bytes(data, image.Options{.return_metadata, .do_not_decompress_image})
-			fmt.eprintln(im.width, im.height)
-			// if err != NOERR do return err
-			return display_image_from_raw_data(data, Image_Format.JPEG, [2]uint{cast(uint)im.width, cast(uint)im.height}, display_id, loc)
+			return display_image_from_data_and_format_and_size(data, Image_Format.JPEG, [2]uint{cast(uint)im.width, cast(uint)im.height}, display_id, loc)
 		case: return General_Error.Invalid_Format } }
 

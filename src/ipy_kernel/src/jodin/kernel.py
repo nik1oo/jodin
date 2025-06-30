@@ -26,8 +26,10 @@ KERNEL_SOURCE_PIPE_BUFFER_SIZE = 64 * KILOBYTE
 KERNEL_STDOUT_PIPE_BUFFER_SIZE = 16 * KILOBYTE
 KERNEL_STDERR_PIPE_BUFFER_SIZE = 16 * KILOBYTE
 KERNEL_IOPUB_PIPE_BUFFER_SIZE  = 16 * MEGABYTE
+ANSI_RED                       = "\033[2;31m"
 ANSI_GREEN                     = "\033[2;32m"
 ANSI_RESET                     = "\033[0m"
+KERNEL_ERROR_PREFIX            = ANSI_RED + "[JodinKernel] " + ANSI_RESET
 
 
 def get_odin_root():
@@ -266,7 +268,7 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
             self.send_response_stream('stdout', stdout_message)
             if message_message != None: self.parse_message_stream(message_message)
         else:
-            self.send_response_stream('stdout', "Error: Could not send message to jodin.")
+            self.send_response_stream('stdout', KERNEL_ERROR_PREFIX + "No response from interpreter. Restart kernel.")
         return {'status': 'ok',
                 'execution_count': self.execution_count,
                 'payload': [],

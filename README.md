@@ -87,3 +87,9 @@ poetry -C=./src/ipy_kernel run jupyter notebook
 
 Once in notebook, to select the JOdin kernel go to `Kernel > Change Kernel...` and select `JODIN`.
 
+To open the demo notebook:
+
+```
+jupyter notebook examples/demo.ipynb
+```
+

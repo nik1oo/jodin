@@ -34,7 +34,7 @@ KERNEL_STDERR_PIPE_BUFFER_SIZE:: 16 * mem.Kilobyte
 KERNEL_IOPUB_PIPE_BUFFER_SIZE::  16 * mem.Megabyte
 CELL_STDOUT_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_STDERR_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
-CELL_ARENA_SIZE::                1 * mem.Megabyte
+CELL_ARENA_SIZE::                10 * mem.Megabyte
 
 
 main:: proc() {
@@ -59,7 +59,6 @@ main:: proc() {
 		else do cell, err = recompile_cell(session, frontend_cell_id, code_raw)
 		os.flush(os.stdout)
 		if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
-		copy_stderr(session.stderr_pipe.input_handle)
 		session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
 		session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
 		fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")

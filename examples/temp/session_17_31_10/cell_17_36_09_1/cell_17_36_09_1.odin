@@ -1,23 +1,30 @@
 
-package cell_11_57_42_3
+package cell_17_36_09_1
 
 import "shared:jodin"
 import "core:io"
 import "core:os"
 import "core:fmt"
+import "vendor:glfw"
+import gl "vendor:OpenGL"
+import "core:thread"
+import "core:sync"
+
 
 @(export) __cell__: ^jodin.Cell = nil
 __stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle
 __symmap__: ^map[string]rawptr = nil
 
-m: []int
+data_mutex: ^sync.Mutex
+color: [4]f32
 
 
 
 @(export) __update_symmap__:: proc() {
-	__symmap__["m"] = auto_cast &m
+	__symmap__["color"] = auto_cast &color
 }
 @(export) __apply_symmap__:: proc() {
+	data_mutex = (cast(^sync.Mutex)__symmap__["data_mutex"])
 }
 
 
@@ -35,9 +42,7 @@ m: []int
 @(export) __main__:: proc() {
 	context = __cell__.cell_context
 
-	m = make([]int, 10)
-	 for i in 0 ..< 10 do m[i] = i
-	 for i in 0 ..< 20 do fmt.println(m[i])
+	color = { 0, 0, 0, 1 }
 
 	os.stdout = __original_stdout__
 	os.stderr = __original_stderr__

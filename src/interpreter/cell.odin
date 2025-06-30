@@ -194,18 +194,21 @@ run_cell_multi_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr
 	// TODO Pass `cell.cell_context` to `init_context` argument, instead of setting it manually in the thread's `__init__` proc. //
 	cell_thread: = thread.create_and_start_with_poly_data(cell, cell_thread_proc, init_context = context, priority = .Normal, self_cleanup = false)
 	if cell_thread == nil do return "", "", "", error_handler(General_Error.Spawn_Error, "Failed to spawn cell thread.")
-	timer: time.Stopwatch
-	time.stopwatch_start(&timer)
-	for ! thread.is_done(cell_thread) {
-		if int(time.duration_seconds(time.stopwatch_duration(timer))) >= cell.tags.timeout {
-			thread.terminate(cell_thread, 0)
-			error_handler(os.Error(os.General_Error.Timeout), "Cell timed out.")
-			break } }
-	cell_stdout, _ = internal_pipe.read(&cell.stdout_pipe)
-	cell_stderr, _ = internal_pipe.read(&cell.stderr_pipe)
-	cell_iopub, _ = internal_pipe.read(&cell.iopub_pipe)
-	thread.destroy(cell_thread)
-	return cell_stdout, cell_stderr, cell_iopub, NOERR }
+	if ! cell.tags.async {
+		timer: time.Stopwatch
+		time.stopwatch_start(&timer)
+		for ! thread.is_done(cell_thread) {
+			if int(time.duration_seconds(time.stopwatch_duration(timer))) >= cell.tags.timeout {
+				thread.terminate(cell_thread, 0)
+				error_handler(os.Error(os.General_Error.Timeout), "Cell timed out.")
+				break } }
+		cell_stdout, _ = internal_pipe.read(&cell.stdout_pipe)
+		cell_stderr, _ = internal_pipe.read(&cell.stderr_pipe)
+		cell_iopub, _ = internal_pipe.read(&cell.iopub_pipe)
+		thread.destroy(cell_thread)
+		return cell_stdout, cell_stderr, cell_iopub, NOERR }
+	else {
+		return "", "", "", NOERR } }
 
 
 run_cell:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {

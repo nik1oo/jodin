@@ -25,9 +25,10 @@ import "core:thread"
 
 
 Tags :: struct {
-	odin_path: string,
+	odin_path:  string,
 	build_args: string,
-	timeout: int }
+	timeout:    int,
+	async:      bool }
 
 
 _node_string:: proc(file: ^ast.File, node: ast.Node) -> string {
@@ -141,6 +142,8 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		else if strings.starts_with(tag.text, "#+timeout ") {
 			timeout, ok: = strconv.parse_int(tag.text[10:])
 			if ok do cell.tags.timeout = timeout }
+		else if strings.starts_with(tag.text, "#+async") {
+			cell.tags.async = true }
 		else do fmt.sbprintln(&file_tags, tag.text) }
 
 	// PARSE DECLARATIONS //
@@ -178,13 +181,13 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 						case ^ast.Basic_Lit:
 							if inferred_type do if ! infer_basic_lit_type(value, &type_string) do return error_handler(General_Error.Preprocessor_Error, correct_raw_code_pos(decl.pos), "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string)
 							append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = node_string(file, decl.values[i], &external_variable_ident_exprs) })
-						case ^ast.Comp_Lit, ^ast.Ident, ^ast.Call_Expr, ^ast.Binary_Expr, ^ast.Unary_Expr, ^ast.Paren_Expr, ^ast.Deref_Expr:
+						case ^ast.Comp_Lit, ^ast.Ident, ^ast.Call_Expr, ^ast.Binary_Expr, ^ast.Unary_Expr, ^ast.Paren_Expr, ^ast.Deref_Expr, ^ast.Auto_Cast:
 							if inferred_type do return error_handler(General_Error.Preprocessor_Error, correct_raw_code_pos(decl.pos), "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string)
 							else do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = node_string(file, decl.values[i], &external_variable_ident_exprs) })
 						case ^ast.Struct_Type, ^ast.Proc_Lit:
 							fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs))
 						case:
-							return error_handler(General_Error.Preprocessor_Error, "Unhandled mutable value declaration %s of type %T.", node_string(file, decl.values[i], &external_variable_ident_exprs), decl.values[i]) }
+							return error_handler(General_Error.Preprocessor_Error, "Unhandled mutable value declaration %s of type %v.", node_string(file, decl.values[i], &external_variable_ident_exprs), value) }
 					else {
 						append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = "" }) } } }
 		case ^ast.Import_Decl:
