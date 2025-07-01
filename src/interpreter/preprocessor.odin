@@ -88,6 +88,23 @@ Preprocessor:: struct {
 
 
 preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
+
+	// SUPPORT PROCS //
+	stmt_label:: proc(pp: ^Preprocessor, stmt: ast.Any_Stmt) -> string {
+		#partial switch derived in stmt {
+		case ^ast.Block_Stmt:        return node_to_string(pp, derived.label) if derived.label != nil else ""
+		case ^ast.If_Stmt:           return node_to_string(pp, derived.label) if derived.label != nil else ""
+		case ^ast.For_Stmt:          return node_to_string(pp, derived.label) if derived.label != nil else ""
+		case ^ast.Range_Stmt:        return node_to_string(pp, derived.label) if derived.label != nil else ""
+		case ^ast.Unroll_Range_Stmt: return node_to_string(pp, derived.label) if derived.label != nil else ""
+		case ^ast.Switch_Stmt:       return node_to_string(pp, derived.label) if derived.label != nil else ""
+		case ^ast.Type_Switch_Stmt:  return node_to_string(pp, derived.label) if derived.label != nil else ""
+		case ^ast.Branch_Stmt:       return node_to_string(pp, derived.label) if derived.label != nil else ""
+		case:                        return "" } }
+	node_is_synced:: proc(pp: ^Preprocessor, node: ^ast.Node) -> bool {
+		scope: = [2]int{ node.pos.offset, node.end.offset }
+		return slice.contains(pp.sync_scopes[:], scope) }
+
 	context = cell.cell_context
 
 	pp: Preprocessor = {
@@ -186,7 +203,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	// PARSE DECLARATIONS //
 	for decl_node, _ in pp.file.decls {
 		fmt.printfln("%s%T:%s %s", ANSI_BOLD_BLUE, reflect.get_union_variant(decl_node.derived_stmt), ANSI_RESET, preprocess_node(&pp, decl_node)) }
-
 	DECLS: for decl_node, _ in pp.file.decls do #partial switch decl in decl_node.derived_stmt {
 		case ^ast.Value_Decl:
 			PREPROCESS_VALUE_DECL: {
@@ -235,17 +251,17 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``) } } }
 		case ^ast.Import_Decl:
 			fmt.sbprintln(&import_stmts, `		`, preprocess_node(&pp, decl_node), sep=``)
-  		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt, ^ast.Range_Stmt:
+  		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', preprocess_node(&pp, decl_node))
-  		case ^ast.For_Stmt:
-			scope: = [2]int{ decl.pos.offset, decl.end.offset }
-			synced: bool = slice.contains(pp.sync_scopes[:], scope)
+  		case ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.For_Stmt, ^ast.Range_Stmt, ^ast.Unroll_Range_Stmt:
+  			// TODO Combine this with If, For, Range and Unroll. I only need stmt_label proc. //
+  			label, synced: = stmt_label(&pp, decl), node_is_synced(&pp, decl_node)
 			if synced do fmt.sbprintln(&main_stmts, `
-				sync.mutex_lock(__data_mutex__)`)
+				sync.ticket_mutex_lock(__data_mutex__)`)
 			fmt.sbprintln(&main_stmts, `
-				`, strings.concatenate({(decl.label != nil && ! synced)  ? fmt.aprintf("%s: ", preprocess_node(&pp, decl.label)) : "", preprocess_node(&pp, decl)}), sep=``)
+				`, strings.concatenate({(label != "" && ! synced) ? fmt.aprintf("%s: ", label) : "", preprocess_node(&pp, decl_node)}), sep=``)
 			if synced do fmt.sbprintln(&main_stmts, `
-				sync.mutex_unlock(__data_mutex__)`)
+				sync.ticket_mutex_unlock(__data_mutex__)`)
 		case ^ast.Switch_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", preprocess_node(&pp, decl)}))
 		case:
@@ -273,7 +289,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	// CELL VARIABLES //
 	fmt.sbprintln(&sb, `
 		@(export) __cell__: ^jodin.Cell = nil
-		__data_mutex__: ^sync.Mutex = nil
+		__data_mutex__: ^sync.Ticket_Mutex = nil
 		__stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle
 		__symmap__: ^map[string]rawptr = nil`)
 
@@ -332,7 +348,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	fmt.sbprintln(&sb, `
 		@(export) __init__:: proc(_cell: ^jodin.Cell, _stdout: os.Handle, _stderr: os.Handle, _iopub: os.Handle, _symmap: ^map[string]rawptr) {
 			__data_mutex__ = &_cell.session.data_mutex
-			sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)
+			sync.ticket_mutex_lock(__data_mutex__); defer sync.ticket_mutex_unlock(__data_mutex__)
 			__cell__ = _cell
 			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
 			context = __cell__.cell_context
@@ -348,7 +364,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	fmt.sbprintln(&sb, `
 		@(export) __main__:: proc() {`)
 	if ! cell.tags.async do fmt.sbprintln(&sb, `
-			sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)`)
+			sync.ticket_mutex_lock(__data_mutex__); defer sync.ticket_mutex_unlock(__data_mutex__)`)
 	fmt.sbprintln(&sb, `
 			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
 			context = __cell__.cell_context`)

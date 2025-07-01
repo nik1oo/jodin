@@ -34,7 +34,7 @@ Procedure:: struct { name: string, type: string, value: string }
 // INTERPRETER SESSION //
 Session:: struct {
 	// MUTEX //
-	data_mutex:                     sync.Mutex,
+	data_mutex:                     sync.Ticket_Mutex,
 
 	// ID //
 	name:                           string,

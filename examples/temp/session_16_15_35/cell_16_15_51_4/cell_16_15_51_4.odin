@@ -1,6 +1,6 @@
 
 
-		package cell_15_32_49_1
+		package cell_16_15_51_4
 
 		import "shared:jodin"
 		import "core:io"
@@ -10,11 +10,16 @@
 		import "vendor:glfw"
 		import gl "vendor:OpenGL"
 		import "core:thread"
+		import "core:time"
+
+
 
 		@(export) __cell__: ^jodin.Cell = nil
-		__data_mutex__: ^sync.Mutex = nil
+		__data_mutex__: ^sync.Ticket_Mutex = nil
 		__stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle
 		__symmap__: ^map[string]rawptr = nil
+
+			color: ^[4]f32
 
 		@(export) __update_symmap__:: proc() {
 
@@ -22,11 +27,14 @@
 
 		@(export) __apply_symmap__:: proc() {
 
+		color = (cast(^[4]f32)__symmap__["color"])
+	
+
 		}
 
 		@(export) __init__:: proc(_cell: ^jodin.Cell, _stdout: os.Handle, _stderr: os.Handle, _iopub: os.Handle, _symmap: ^map[string]rawptr) {
 			__data_mutex__ = &_cell.session.data_mutex
-			sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)
+			sync.ticket_mutex_lock(__data_mutex__); defer sync.ticket_mutex_unlock(__data_mutex__)
 			__cell__ = _cell
 			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
 			context = __cell__.cell_context
@@ -40,10 +48,25 @@
 
 		@(export) __main__:: proc() {
 
-			sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)
-
 			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
 			context = __cell__.cell_context
+			ok: bool = bool(glfw.Init())
+
+				if ! ok do return
+			window: glfw.WindowHandle = glfw.CreateWindow(128, 128, "jodin glfw example", nil, nil)
+	 glfw.MakeContextCurrent(window)
+	 gl.load_up_to(4, 5, glfw.gl_set_proc_address)
+
+				sync.ticket_mutex_lock(__data_mutex__)
+
+				for !glfw.WindowShouldClose(window) {
+    gl.ClearColor(color^.x, color^.y, color^.z, color^.w)
+    gl.Clear(gl.COLOR_BUFFER_BIT)
+    glfw.SwapBuffers(window)
+    glfw.PollEvents() }
+
+				sync.ticket_mutex_unlock(__data_mutex__)
+	 glfw.Terminate()
 
 
 			os.stdout = __original_stdout__
