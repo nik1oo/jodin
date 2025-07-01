@@ -36,6 +36,14 @@ node_to_string:: proc(pp: ^Preprocessor, node: ast.Node) -> string {
 	return pp.file.src[node.pos.offset:node.end.offset] }
 
 
+stmt_to_string:: proc(pp: ^Preprocessor, stmt: ^ast.Stmt) -> string {
+	return node_to_string(pp, stmt) if stmt != nil else "" }
+
+
+expr_to_string:: proc(pp: ^Preprocessor, expr: ^ast.Expr) -> string {
+	return node_to_string(pp, expr) if expr != nil else "" }
+
+
 preprocess_node:: proc(pp: ^Preprocessor, node: ast.Node, async: bool = false) -> string {
 	// TODO Throw error if an external variable is found and the current scope is async. //
 	hat_points: [dynamic]int = make_dynamic_array([dynamic]int)
@@ -253,11 +261,35 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 			fmt.sbprintln(&import_stmts, `		`, preprocess_node(&pp, decl_node), sep=``)
   		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', preprocess_node(&pp, decl_node))
-  		case ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.For_Stmt, ^ast.Range_Stmt, ^ast.Unroll_Range_Stmt:
-  			// TODO Combine this with If, For, Range and Unroll. I only need stmt_label proc. //
+		case ^ast.For_Stmt:
   			label, synced: = stmt_label(&pp, decl), node_is_synced(&pp, decl_node)
-			if synced do fmt.sbprintln(&main_stmts, `
-				sync.ticket_mutex_lock(__data_mutex__)`)
+  			if (label != "" && ! synced) do fmt.sbprintf(
+  				&main_stmts,
+  				`	%s: `,
+  				label)
+  			else do fmt.sbprint(
+  				&main_stmts,
+  				`	`)
+			fmt.sbprintfln(
+				&main_stmts,
+				`	for %s; %s; %s %s`,
+				stmt_to_string(&pp, decl.init),
+				expr_to_string(&pp, decl.cond),
+				stmt_to_string(&pp, decl.post),
+				`{`)
+			if synced do fmt.sbprintln(&main_stmts,
+				`		sync.ticket_mutex_lock(__data_mutex__)` + NL +
+				`		defer sync.ticket_mutex_unlock(__data_mutex__)`)
+			fmt.sbprintln(
+				&main_stmts,
+				node_to_string(&pp, decl.body))
+			fmt.sbprintln(
+				&main_stmts,
+				`	}`)
+  		case ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.Range_Stmt, ^ast.Unroll_Range_Stmt:
+  			label, synced: = stmt_label(&pp, decl), node_is_synced(&pp, decl_node)
+			if synced do fmt.sbprintln(&main_stmts,
+				`sync.ticket_mutex_lock(__data_mutex__)`)
 			fmt.sbprintln(&main_stmts, `
 				`, strings.concatenate({(label != "" && ! synced) ? fmt.aprintf("%s: ", label) : "", preprocess_node(&pp, decl_node)}), sep=``)
 			if synced do fmt.sbprintln(&main_stmts, `
@@ -381,9 +413,9 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	cell.imports_string = strings.to_string(import_stmts)
 	cell.global_constants_string = strings.to_string(global_constant_stmts)
 
-	fmt.eprintln(ANSI_BOLD_BLUE, "-----------------------------------------------------")
-	fmt.eprintln(cell.code)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	// fmt.eprintln(ANSI_BOLD_BLUE, "-----------------------------------------------------")
+	// fmt.eprintln(cell.code)
+	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
 
 	return NOERR }
 

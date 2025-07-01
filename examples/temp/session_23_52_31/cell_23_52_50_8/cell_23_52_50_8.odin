@@ -1,31 +1,37 @@
 
 
-		package cell_16_15_45_2
+		package cell_23_52_50_8
 
 		import "shared:jodin"
 		import "core:io"
 		import "core:os"
 		import "core:sync"
+
+
 		import "core:fmt"
 		import "vendor:glfw"
 		import gl "vendor:OpenGL"
 		import "core:thread"
 		import "core:time"
+		import "core:math"
+
 
 
 		@(export) __cell__: ^jodin.Cell = nil
 		__data_mutex__: ^sync.Ticket_Mutex = nil
 		__stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle
 		__symmap__: ^map[string]rawptr = nil
-color: [4]f32
+
+			color: ^[4]f32
 
 		@(export) __update_symmap__:: proc() {
-
-		__symmap__["color"] = auto_cast &color
 
 		}
 
 		@(export) __apply_symmap__:: proc() {
+
+		color = (cast(^[4]f32)__symmap__["color"])
+	
 
 		}
 
@@ -49,7 +55,7 @@ color: [4]f32
 
 			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
 			context = __cell__.cell_context
-	color = { 0, 0, 0, 1 }
+	 color^ = { math.sin(0.1), 1, 0, 0 }
 
 
 			os.stdout = __original_stdout__

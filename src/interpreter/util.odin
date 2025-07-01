@@ -22,7 +22,7 @@ import "core:bytes"
 import "core:thread"
 
 
-NEWLINE::                "\r\n"
+NL::                     "\n"
 NULL::                   "\x00"
 EOT::                    "\x03"
 HASH_SEED::              281091900

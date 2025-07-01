@@ -1,17 +1,18 @@
 
 
-		package cell_16_16_01_5
+		package cell_23_52_46_5
 
 		import "shared:jodin"
 		import "core:io"
 		import "core:os"
 		import "core:sync"
+
 		import "core:fmt"
 		import "vendor:glfw"
 		import gl "vendor:OpenGL"
 		import "core:thread"
 		import "core:time"
-
+		import "core:math"
 
 
 
@@ -49,11 +50,24 @@
 
 		@(export) __main__:: proc() {
 
-			sync.ticket_mutex_lock(__data_mutex__); defer sync.ticket_mutex_unlock(__data_mutex__)
-
 			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
 			context = __cell__.cell_context
-	 color^ = { 0, 1, 0, 0 }
+			ok: bool = bool(glfw.Init())
+
+				if ! ok do return
+			window: glfw.WindowHandle = glfw.CreateWindow(128, 128, "jodin glfw example", nil, nil)
+	 glfw.MakeContextCurrent(window)
+	 gl.load_up_to(4, 5, glfw.gl_set_proc_address)
+		for ; !glfw.WindowShouldClose(window);  {
+		sync.ticket_mutex_lock(__data_mutex__)
+		defer sync.ticket_mutex_unlock(__data_mutex__)
+{
+    gl.ClearColor(color.x, color.y, color.z, color.w)
+    gl.Clear(gl.COLOR_BUFFER_BIT)
+    glfw.SwapBuffers(window)
+    glfw.PollEvents() }
+	}
+	 glfw.Terminate()
 
 
 			os.stdout = __original_stdout__
