@@ -1,6 +1,6 @@
 
 
-		package cell_15_20_50_1
+		package cell_15_32_51_2
 
 		import "shared:jodin"
 		import "core:io"
@@ -10,6 +10,7 @@
 		import "vendor:glfw"
 		import gl "vendor:OpenGL"
 		import "core:thread"
+
 
 		@(export) __cell__: ^jodin.Cell = nil
 		__data_mutex__: ^sync.Mutex = nil
@@ -40,10 +41,17 @@
 
 		@(export) __main__:: proc() {
 
-			sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)
-
 			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
 			context = __cell__.cell_context
+			 x: int = 14
+
+				sync.mutex_lock(__data_mutex__)
+
+				for i: int = 0; i < 4; i += 1 {
+    fmt.println(x)
+}
+
+				sync.mutex_unlock(__data_mutex__)
 
 
 			os.stdout = __original_stdout__

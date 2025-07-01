@@ -235,10 +235,17 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``) } } }
 		case ^ast.Import_Decl:
 			fmt.sbprintln(&import_stmts, `		`, preprocess_node(&pp, decl_node), sep=``)
-      		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt, ^ast.Range_Stmt:
+  		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt, ^ast.Range_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', preprocess_node(&pp, decl_node))
-      		case ^ast.For_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.label != nil ? fmt.aprintf("%s: ", preprocess_node(&pp, decl.label)) : "", preprocess_node(&pp, decl)}))
+  		case ^ast.For_Stmt:
+			scope: = [2]int{ decl.pos.offset, decl.end.offset }
+			synced: bool = slice.contains(pp.sync_scopes[:], scope)
+			if synced do fmt.sbprintln(&main_stmts, `
+				sync.mutex_lock(__data_mutex__)`)
+			fmt.sbprintln(&main_stmts, `
+				`, strings.concatenate({(decl.label != nil && ! synced)  ? fmt.aprintf("%s: ", preprocess_node(&pp, decl.label)) : "", preprocess_node(&pp, decl)}), sep=``)
+			if synced do fmt.sbprintln(&main_stmts, `
+				sync.mutex_unlock(__data_mutex__)`)
 		case ^ast.Switch_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", preprocess_node(&pp, decl)}))
 		case:
