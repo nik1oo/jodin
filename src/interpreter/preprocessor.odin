@@ -28,28 +28,29 @@ Tags :: struct {
 	odin_path:  string,
 	build_args: string,
 	timeout:    int,
-	async:      bool }
+	async:      bool,
+	no_link:    bool }
 
 
-_node_string:: proc(file: ^ast.File, node: ast.Node) -> string {
-	return file.src[node.pos.offset:node.end.offset] }
+node_to_string:: proc(pp: ^Preprocessor, node: ast.Node) -> string {
+	return pp.file.src[node.pos.offset:node.end.offset] }
 
 
-node_string:: proc(file: ^ast.File, node: ast.Node, external_variable_ident_exprs: ^[dynamic]^ast.Node) -> string {
-	in_range:: proc(x, a, b: int) -> bool { return (x >= a) && (x < b) }
+preprocess_node:: proc(pp: ^Preprocessor, node: ast.Node, async: bool = false) -> string {
+	// TODO Throw error if an external variable is found and the current scope is async. //
 	hat_points: [dynamic]int = make_dynamic_array([dynamic]int)
-	for i in 0..<len(external_variable_ident_exprs) {
-		expr: = external_variable_ident_exprs[i]
+	for i in 0..<len(pp.external_variable_nodes) {
+		expr: = pp.external_variable_nodes[i]
 		if in_range(expr.pos.offset, node.pos.offset, node.end.offset) do append(&hat_points, expr.end.offset) }
-	if len(hat_points) == 0 do return file.src[node.pos.offset:node.end.offset]
+	if len(hat_points) == 0 do return pp.file.src[node.pos.offset:node.end.offset]
 	sb: strings.Builder = strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
 	defer strings.builder_destroy(&sb)
 	i: = node.pos.offset
 	for hat_point in hat_points {
-		fmt.sbprint(&sb, file.src[i:hat_point])
+		fmt.sbprint(&sb, pp.file.src[i:hat_point])
 		fmt.sbprint(&sb, '^')
 		i = hat_point }
-	if i <= node.end.offset do fmt.sbprint(&sb, file.src[i:node.end.offset])
+	if i <= node.end.offset do fmt.sbprint(&sb, pp.file.src[i:node.end.offset])
 	return strings.to_string(sb) }
 
 
@@ -78,8 +79,22 @@ insert_package_decl:: proc(src, package_name: string) -> (res: string) {
 	return strings.concatenate({src[:i], fmt.aprintfln("package %s", package_name), src[i:]}) }
 
 
+Preprocessor:: struct {
+	cell:                    ^Cell,
+	external_variable_nodes: [dynamic]^ast.Node,
+	file:                    ^ast.File,
+	sync_scopes:             [dynamic][2]int,
+	err:                     Error }
+
+
 preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	context = cell.cell_context
+
+	pp: Preprocessor = {
+		cell = cell,
+		external_variable_nodes = make_dynamic_array([dynamic]^ast.Node),
+		sync_scopes = make([dynamic][2]int),
+		err = NOERR }
 
 	sb:=                            strings.builder_make_len_cap(0, 1 * mem.Megabyte)
 	file_tags:=                     strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
@@ -89,7 +104,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	global_procedure_stmts:=        strings.builder_make_len_cap(0, 32 * mem.Kilobyte)
 	main_stmts:=                    strings.builder_make_len_cap(0, 32 * mem.Kilobyte)
 	import_stmts:=                  strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
-	external_variable_ident_exprs:= make_dynamic_array([dynamic]^ast.Node)
 
 	// ASSEMBLE PREPROCESSOR INPUT //
 	src: = insert_package_decl(cell.code_raw, cell.name)
@@ -101,40 +115,61 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	NO_POS:: tokenizer.Pos{}
 	pkg:= ast.new_from_positions(ast.Package, NO_POS, NO_POS)
 	pkg.fullpath, _ = filepath.abs(cell.package_filepath)
-	file: = ast.new(ast.File, NO_POS, NO_POS)
-	file.pkg = pkg
-	file.src = src
-	file.fullpath, _ = filepath.abs(cell.source_filepath)
-	pkg.files[file.fullpath] = file
+	pp.file = ast.new(ast.File, NO_POS, NO_POS)
+	pp.file.pkg = pkg
+	pp.file.src = src
+	pp.file.fullpath, _ = filepath.abs(cell.source_filepath)
+	pkg.files[pp.file.fullpath] = pp.file
 	prsr:= parser.default_parser()
 	prsr.err, prsr.warn = stub_error_handler, stub_error_handler
-	ok: = parser.parse_file(&prsr, file)
-	if ! ok do return error_handler(General_Error.Preprocessor_Error, "Could not parse file %s.", file.src)
+	ok: = parser.parse_file(&prsr, pp.file)
+	if ! ok do return error_handler(General_Error.Preprocessor_Error, "Could not parse file %s.", pp.file.src)
 
-	// COLLECT EXTERNAL VARIABLE IDENT EXPRS //
-	// TODO This doesn't consider overshadowing. //
-	Visitor_Data:: struct { cell: ^Cell, external_variable_ident_exprs: ^[dynamic]^ast.Node }
-	visitor_data: Visitor_Data = { cell, &external_variable_ident_exprs }
-	v := &ast.Visitor{
+	// COLLECT SYNC SCOPES //
+	v: = &ast.Visitor {
 		visit = proc(v: ^ast.Visitor, node: ^ast.Node) -> ^ast.Visitor {
 			if node == nil do return nil
-			cell: = (cast(^Visitor_Data)v.data).cell
-			external_variable_ident_exprs: = (cast(^Visitor_Data)v.data).external_variable_ident_exprs
+			pp: ^Preprocessor = cast(^Preprocessor)v.data
+			scope: = [2]int{node.pos.offset, node.end.offset}
+			SYNC_LABEL:: "sync"
+			#partial switch stmt in node.derived {
+				case ^ast.Block_Stmt:        if stmt.label!=nil do if node_to_string(pp, stmt.label) == SYNC_LABEL do append(&pp.sync_scopes, scope)
+				case ^ast.If_Stmt:           if stmt.label!=nil do if node_to_string(pp, stmt.label) == SYNC_LABEL do append(&pp.sync_scopes, scope)
+				case ^ast.For_Stmt:          if stmt.label!=nil do if node_to_string(pp, stmt.label) == SYNC_LABEL do append(&pp.sync_scopes, scope)
+				case ^ast.Range_Stmt:        if stmt.label!=nil do if node_to_string(pp, stmt.label) == SYNC_LABEL do append(&pp.sync_scopes, scope)
+				case ^ast.Unroll_Range_Stmt: if stmt.label!=nil do if node_to_string(pp, stmt.label) == SYNC_LABEL do append(&pp.sync_scopes, scope) }
+			return v },
+		data = &pp }
+	ast.walk(v, &pp.file.node)
+
+	// COLLECT EXTERNAL VARIABLE NODES //
+	// TODO This doesn't consider overshadowing. //
+	EVI_expr_is_valid:: proc(pp: ^Preprocessor, node: ^ast.Node) -> bool {
+		if ! pp.cell.tags.async do return true
+		for scope in pp.sync_scopes do if in_range(node.pos.offset, scope[0], scope[1]) do return true
+		return false }
+	v = &ast.Visitor {
+		visit = proc(v: ^ast.Visitor, node: ^ast.Node) -> ^ast.Visitor {
+			if node == nil do return nil
+			pp: ^Preprocessor = cast(^Preprocessor)v.data
 			#partial switch ident in node.derived {
 				case ^ast.Ident:
 					is_externally_declared: bool = false
-					SEARCH: for _, other_cell in cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables do if variable.name == ident.name {
+					SEARCH: for _, other_cell in pp.cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables do if variable.name == ident.name {
 						is_externally_declared = true
 						break SEARCH }
 					is_shadowing: bool = false  // TODO
 					is_value_decl: bool = false // TODO
-					if is_externally_declared && (! is_shadowing) && (! is_value_decl) do append(external_variable_ident_exprs, node) }
+					if is_externally_declared && (! is_shadowing) && (! is_value_decl) {
+						append(&pp.external_variable_nodes, node) } }
+						// if EVI_expr_is_valid(pp, node) do append(&pp.external_variable_nodes, node)
+						// else do pp.err = error_handler(General_Error.Preprocessor_Error, "References to external variables in `#+async` cells are only allowed inside scopes labeled by `sync:`.") } }
 			return v },
-		data = &visitor_data }
-	ast.walk(v, &file.node)
+		data = &pp }
+	ast.walk(v, &pp.file.node)
 
 	// PARSE TAGS //
-	for tag in file.tags {
+	for tag in pp.file.tags {
 		if strings.starts_with(tag.text, "#+odin ") {
 			cell.tags.odin_path = tag.text[7:] }
 		else if strings.starts_with(tag.text, "#+args ") {
@@ -144,10 +179,15 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 			if ok do cell.tags.timeout = timeout }
 		else if strings.starts_with(tag.text, "#+async") {
 			cell.tags.async = true }
+		else if strings.starts_with(tag.text, "#+no-link") {
+			cell.tags.no_link = true }
 		else do fmt.sbprintln(&file_tags, tag.text) }
 
 	// PARSE DECLARATIONS //
-	DECLS: for decl_node, _ in file.decls do #partial switch decl in decl_node.derived_stmt {
+	for decl_node, _ in pp.file.decls {
+		fmt.printfln("%s%T:%s %s", ANSI_BOLD_BLUE, reflect.get_union_variant(decl_node.derived_stmt), ANSI_RESET, preprocess_node(&pp, decl_node)) }
+
+	DECLS: for decl_node, _ in pp.file.decls do #partial switch decl in decl_node.derived_stmt {
 		case ^ast.Value_Decl:
 			PREPROCESS_VALUE_DECL: {
 				type_string: string = ""
@@ -159,47 +199,50 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 						case ^ast.Proc_Lit:
 							append(&cell.global_procedures, Procedure{
 								name = (decl.names[0].derived_expr.(^ast.Ident)).name,
-								type = node_string(file, value.type, &external_variable_ident_exprs),
-								value = node_string(file, value.body, &external_variable_ident_exprs) })
+								type = preprocess_node(&pp, value.type),
+      								value = preprocess_node(&pp, value.body) }      )
 							break PREPROCESS_VALUE_DECL
 						case ^ast.Basic_Lit:
-							fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs))
-							break PREPROCESS_VALUE_DECL
+							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
+      							break PREPROCESS_VALUE_DECL
 						case ^ast.Binary_Expr:
-							fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs))
-							break PREPROCESS_VALUE_DECL
+							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
+      							break PREPROCESS_VALUE_DECL
 						case:
-							return error_handler(General_Error.Preprocessor_Error, "Unhandled immutable value declaration %s of type $v.", node_string(file, decl.values[0], &external_variable_ident_exprs), value) }
-					fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs)) }
+							return error_handler(General_Error.Preprocessor_Error, "Unhandled immutable value declaration %s of type $v.", preprocess_node(&pp, decl.values[0]), value) }
+					fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))       }
 
 				// MUTABLE //
-				if decl.type != nil do type_string = node_string(file, decl.type, &external_variable_ident_exprs)
-				else do inferred_type = true
+				if decl.type != nil do type_string = preprocess_node(&pp, decl.type)
+	      			else do inferred_type = true
 				for name, i in decl.names {
 					name_string: = (name.derived_expr.(^ast.Ident)).name
 					if i < len(decl.values) do #partial switch value in decl.values[i].derived_expr {
 						case ^ast.Basic_Lit:
 							if inferred_type do if ! infer_basic_lit_type(value, &type_string) do return error_handler(General_Error.Preprocessor_Error, correct_raw_code_pos(decl.pos), "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string)
-							append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = node_string(file, decl.values[i], &external_variable_ident_exprs) })
+							if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = preprocess_node(&pp, decl.values[i]) })
+							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node))
 						case ^ast.Comp_Lit, ^ast.Ident, ^ast.Call_Expr, ^ast.Binary_Expr, ^ast.Unary_Expr, ^ast.Paren_Expr, ^ast.Deref_Expr, ^ast.Auto_Cast:
 							if inferred_type do return error_handler(General_Error.Preprocessor_Error, correct_raw_code_pos(decl.pos), "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string)
-							else do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = node_string(file, decl.values[i], &external_variable_ident_exprs) })
+							else if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = preprocess_node(&pp, decl.values[i]) })
+							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``)
 						case ^ast.Struct_Type, ^ast.Proc_Lit:
-							fmt.sbprintln(&global_constant_stmts, node_string(file, decl, &external_variable_ident_exprs))
-						case:
-							return error_handler(General_Error.Preprocessor_Error, "Unhandled mutable value declaration %s of type %v.", node_string(file, decl.values[i], &external_variable_ident_exprs), value) }
+							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
+      						case:
+							return error_handler(General_Error.Preprocessor_Error, "Unhandled mutable value declaration %s of type %v.", preprocess_node(&pp, decl.values[i]), value) }
 					else {
-						append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = "" }) } } }
+						if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = "" })
+							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``) } } }
 		case ^ast.Import_Decl:
-			fmt.sbprintln(&import_stmts, node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt, ^ast.Range_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', node_string(file, decl_node, &external_variable_ident_exprs))
-		case ^ast.For_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.label != nil ? fmt.aprintf("%s: ", node_string(file, decl.label, &external_variable_ident_exprs)) : "", node_string(file, decl, &external_variable_ident_exprs)}))
+			fmt.sbprintln(&import_stmts, `		`, preprocess_node(&pp, decl_node), sep=``)
+      		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt, ^ast.Range_Stmt:
+			fmt.sbprintln(&main_stmts, '\t', preprocess_node(&pp, decl_node))
+      		case ^ast.For_Stmt:
+			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.label != nil ? fmt.aprintf("%s: ", preprocess_node(&pp, decl.label)) : "", preprocess_node(&pp, decl)}))
 		case ^ast.Switch_Stmt:
-			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", node_string(file, decl, &external_variable_ident_exprs)}))
+			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", preprocess_node(&pp, decl)}))
 		case:
-			return error_handler(General_Error.Preprocessor_Error, "Undandled declaration %s of type %T.", node_string(file, decl_node, &external_variable_ident_exprs), decl_node.derived_stmt) }
+			return error_handler(General_Error.Preprocessor_Error, "Undandled declaration %s of type %T.", preprocess_node(&pp, decl_node), decl_node.derived_stmt) }
 
 	nl:: proc(sb: ^strings.Builder) { fmt.sbprintln(sb) }
 
@@ -208,102 +251,106 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl(&sb)
 
 	// PACKAGE DECLARATION //
-	fmt.sbprintln(&sb, "package", cell.name)
-	nl(&sb)
+	fmt.sbprintfln(&sb, `
+		package %s`, cell.name)
 
 	// IMPORT DECLARATIONS //
-	fmt.sbprintln(&sb,
-		"import \"shared:jodin\"\n" +
-		"import \"core:io\"\n" +
-		"import \"core:os\"\n" +
-		"import \"core:sync\"")
+	fmt.sbprintln(&sb, `
+		import "shared:jodin"
+		import "core:io"
+		import "core:os"
+		import "core:sync"`)
 	for _, other_cell in cell.session.cells do if other_cell.loaded do fmt.sbprintln(&sb, other_cell.imports_string)
 	append(&sb.buf, ..import_stmts.buf[:])
-	nl(&sb)
 
 	// CELL VARIABLES //
-	fmt.sbprintln(&sb,
-		"@(export) __cell__: ^jodin.Cell = nil\n" +
-		"__data_mutex__: ^sync.Mutex = nil")
-	fmt.sbprintln(&sb,
-		"__stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle")
-	fmt.sbprintln(&sb,
-		"__symmap__: ^map[string]rawptr = nil")
-	nl(&sb)
+	fmt.sbprintln(&sb, `
+		@(export) __cell__: ^jodin.Cell = nil
+		__data_mutex__: ^sync.Mutex = nil
+		__stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle
+		__symmap__: ^map[string]rawptr = nil`)
 
 	// VARIABLE DECLARATIONS //
 	for _, other_cell in cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables {
-		if variable_is_pointer(variable) do fmt.sbprintfln(&sb, "%s: %s", variable.name, variable.type)
-		else do fmt.sbprintfln(&sb, "%s: ^%s", variable.name, variable.type) }
+		if variable_is_pointer(variable) do fmt.sbprintfln(&sb, `
+			%s: %s`,
+			variable.name, variable.type)
+		else do fmt.sbprintfln(&sb, `
+			%s: ^%s`,
+			variable.name, variable.type) }
 	for variable in cell.global_variables do fmt.sbprintfln(&sb, "%s: %s", variable.name, variable.type)
-	nl(&sb)
 
 	// EXTERNAL PROCEDURE DECLARATIONS //
 	for _, other_cell in cell.session.cells do if other_cell.loaded do for procedure in other_cell.global_procedures {
-		fmt.sbprintfln(&sb, "%s : %s = nil", procedure.name, procedure.type) }
-	nl(&sb)
+		fmt.sbprintfln(&sb, `
+			%s : %s = nil`,
+			procedure.name, procedure.type) }
 
 	// INTERNAL PROCEDURE DECLARATIONS //
 	for procedure in cell.global_procedures {
-		fmt.sbprintfln(&sb, "@(export) %s :: %s %s", procedure.name, procedure.type, procedure.value) }
-	nl(&sb)
+		fmt.sbprintfln(&sb, `
+			@(export) %s :: %s %s`,
+			procedure.name, procedure.type, procedure.value) }
 
 	// SYMMAP PROCS //
-	fmt.sbprintln(&sb,
-		"@(export) __update_symmap__:: proc() {")
-	for variable in cell.global_variables do if variable_is_pointer(variable) do fmt.sbprintfln(&sb,
-		"	__symmap__[\"%s\"] = auto_cast %s", variable.name, variable.name)
-	else do fmt.sbprintfln(&sb,
-		"	__symmap__[\"%s\"] = auto_cast &%s", variable.name, variable.name)
-	fmt.sbprintln(&sb,
-		"}")
-	fmt.sbprintln(&sb,
-		"@(export) __apply_symmap__:: proc() {")
-	for _, other_cell in cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables do if variable.type[0] == '^' do fmt.sbprintfln(&sb,
-		"	%s = auto_cast __symmap__[\"%s\"]", variable.name, variable.name)
-	else do fmt.sbprintfln(&sb,
-		"	%s = (cast(^%s)__symmap__[\"%s\"])", variable.name, variable.type, variable.name)
-	for _, other_cell in cell.session.cells do if other_cell.loaded do for procedure in other_cell.global_procedures do fmt.sbprintfln(&sb,
-		"	%s = auto_cast __symmap__[\"%s\"]", procedure.name, procedure.name)
-	fmt.sbprintln(&sb,
-		"}")
-	nl(&sb)
+	fmt.sbprintln(&sb, `
+		@(export) __update_symmap__:: proc() {`)
+	for variable in cell.global_variables do if variable_is_pointer(variable) do fmt.sbprintfln(&sb, `
+		__symmap__["%s"] = auto_cast %s`,
+		variable.name, variable.name)
+	else do fmt.sbprintfln(&sb, `
+		__symmap__["%s"] = auto_cast &%s`,
+		variable.name, variable.name)
+	fmt.sbprintln(&sb, `
+		}`)
+	fmt.sbprintln(&sb, `
+		@(export) __apply_symmap__:: proc() {`)
+	for _, other_cell in cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables do if variable.type[0] == '^' do fmt.sbprintfln(&sb, `
+		%s = auto_cast __symmap__["%s"]`,
+		variable.name, variable.name)
+	else do fmt.sbprintfln(&sb, `
+		%s = (cast(^%s)__symmap__["%s"])
+	`, variable.name, variable.type, variable.name)
+	for _, other_cell in cell.session.cells do if other_cell.loaded do for procedure in other_cell.global_procedures do fmt.sbprintfln(&sb, `
+		%s = auto_cast __symmap__["%s"]`,
+		procedure.name, procedure.name)
+	fmt.sbprintln(&sb, `
+		}`)
 
 	// GLOBAL CONSTANTS //
 	for _, other_cell in cell.session.cells do if other_cell.loaded do for type in other_cell.global_constants_string do fmt.sbprintln(&sb, type)
 	for type in cell.global_constants_string do fmt.sbprintln(&sb, type)
-	nl(&sb)
 
 	// INIT PROC //
-	fmt.sbprintln(&sb,
-		"@(export) __init__:: proc(_cell: ^jodin.Cell, _stdout: os.Handle, _stderr: os.Handle, _iopub: os.Handle, _symmap: ^map[string]rawptr) {")
-	fmt.sbprintln(&sb,
-		"	__data_mutex__ = _cell.session.data_mutex\n" +
-		"	sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)\n" +
-		"	__cell__ = _cell\n" +
-		"	sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)\n" +
-		"	context = __cell__.cell_context\n" +
-		"	__original_stdout__ = os.stdout\n" +
-		"	__original_stderr__ = os.stderr\n" +
-		"	__stdout__ = _stdout; os.stdout = __stdout__\n" +
-		"	__stderr__ = _stderr; os.stderr = __stderr__\n" +
-		"	__iopub__ = _iopub\n" +
-		"	__symmap__ = _symmap\n" +
-		"}")
-	nl(&sb)
+	fmt.sbprintln(&sb, `
+		@(export) __init__:: proc(_cell: ^jodin.Cell, _stdout: os.Handle, _stderr: os.Handle, _iopub: os.Handle, _symmap: ^map[string]rawptr) {
+			__data_mutex__ = &_cell.session.data_mutex
+			sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)
+			__cell__ = _cell
+			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
+			context = __cell__.cell_context
+			__original_stdout__ = os.stdout
+			__original_stderr__ = os.stderr
+			__stdout__ = _stdout; os.stdout = __stdout__
+			__stderr__ = _stderr; os.stderr = __stderr__
+			__iopub__ = _iopub
+			__symmap__ = _symmap
+		}`)
 
 	// MAIN PROC //
-	fmt.sbprintln(&sb,
-		"@(export) __main__:: proc() {\n" +
-		"	sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)\n" if ! cell.tags.async else "" +
-		"	sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)\n" +
-		"	context = __cell__.cell_context\n")
+	fmt.sbprintln(&sb, `
+		@(export) __main__:: proc() {`)
+	if ! cell.tags.async do fmt.sbprintln(&sb, `
+			sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)`)
+	fmt.sbprintln(&sb, `
+			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
+			context = __cell__.cell_context`)
 	for variable in cell.global_variables do if variable.value != "" do fmt.sbprintfln(&sb, "\t%s = %s", variable.name, variable.value)
 	fmt.sbprintln(&sb, strings.to_string(main_stmts))
-	fmt.sbprintln(&sb,
-		"	os.stdout = __original_stdout__\n" +
-		"	os.stderr = __original_stderr__\n" +
-		"}")
+	fmt.sbprintln(&sb, `
+			os.stdout = __original_stdout__
+			os.stderr = __original_stderr__
+		}`)
 
 	cell.code = strings.to_string(sb)
 
@@ -311,9 +358,9 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	cell.imports_string = strings.to_string(import_stmts)
 	cell.global_constants_string = strings.to_string(global_constant_stmts)
 
-	// fmt.eprintln(ANSI_BLUE, "-----------------------------------------------------")
-	// fmt.eprintln(cell.code)
-	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	fmt.eprintln(ANSI_BOLD_BLUE, "-----------------------------------------------------")
+	fmt.eprintln(cell.code)
+	fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
 
 	return NOERR }
 

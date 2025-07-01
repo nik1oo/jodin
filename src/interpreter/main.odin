@@ -25,7 +25,7 @@ import "external_pipe"
 
 
 VERSION::                        "0.1.0-alpha"
-DEFAULT_CELL_TIMEOUT::           5
+DEFAULT_CELL_TIMEOUT::           20
 PIPE_TIMEOUT::                   10 * time.Second
 PIPE_DELAY::                     100 * time.Millisecond
 STACK_SIZE::                     64 * mem.Megabyte
@@ -35,13 +35,14 @@ KERNEL_STDERR_PIPE_BUFFER_SIZE:: 16 * mem.Kilobyte
 KERNEL_IOPUB_PIPE_BUFFER_SIZE::  16 * mem.Megabyte
 CELL_STDOUT_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_STDERR_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
-CELL_ARENA_SIZE::                2 * mem.Megabyte
+CELL_ARENA_SIZE::                32 * mem.Megabyte
 
 main:: proc() {
 	fmt.println(ANSI_GREEN, "[JodinInterpreter]", ANSI_RESET, " jodin: ", "Version: ", VERSION, sep = "")
 	alo: Allocator
 	allocator_init(&alo, disable_free=true, print_allocations=true, backing_allocator=context.allocator)
-	context.allocator = allocator(&alo)
+	// TEMP
+	// context.allocator = allocator(&alo)
 	session: ^Session = new(Session)
 	start_session(session)
 	defer end_session(session)

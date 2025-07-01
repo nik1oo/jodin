@@ -95,3 +95,6 @@ string_or_newline:: proc(str: string) -> string {
 	if str != "" do return str
 	else do return "\n" }
 
+
+in_range:: proc(x, a, b: int) -> bool { return (x >= a) && (x < b) }
+
