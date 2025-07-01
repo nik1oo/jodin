@@ -20,12 +20,16 @@ import "core:sys/posix"
 import "core:unicode/utf16"
 import "core:bytes"
 import "core:thread"
+import "core:sync"
 import "internal_pipe"
 import "external_pipe"
 import "poll"
 
 
 Cell:: struct {
+	// MUTEX //
+	mutex:                          sync.Mutex,
+
 	// CELL CONTEXT //
 	cell_context:            runtime.Context,
 	cell_allocator:          mem.Arena,
@@ -82,10 +86,12 @@ Cell:: struct {
 init_cell:: proc(cell: ^Cell, session: ^Session, frontend_cell_id: string, code_raw: string, index: uint = 0) -> (err: Error) {
 	// CELL CONTEXT //
 	// TODO Execute context = cell.cell_context at the start of every top-level cell procedure. //
-	cell.cell_context = runtime.default_context()
-	mem.arena_init(&cell.cell_allocator, make([]u8, CELL_ARENA_SIZE))
-	cell.cell_context.allocator = mem.arena_allocator(&cell.cell_allocator)
-	cell.cell_context.temp_allocator = cell.cell_context.allocator
+	// TEMP
+	cell.cell_context = context
+	// cell.cell_context = runtime.default_context()
+	// mem.arena_init(&cell.cell_allocator, make([]u8, CELL_ARENA_SIZE))
+	// cell.cell_context.allocator = mem.arena_allocator(&cell.cell_allocator)
+	// cell.cell_context.temp_allocator = cell.cell_context.allocator
 	context = cell.cell_context
 
 	// PARENT SESSION //
@@ -139,7 +145,9 @@ restart_cell:: proc(cell: ^Cell, code_raw: string) -> (err: Error) {
 
 	// DLL CONTEXT //
 	if cell.compilation_count == 1 {
-		cell.dll_context = runtime.default_context()
+		// TEMP
+		// cell.dll_context = runtime.default_context()
+		cell.dll_context = context
 		mem.tracking_allocator_init(&cell.dll_allocator, runtime.heap_allocator())
 		cell.dll_context.allocator = mem.tracking_allocator(&cell.dll_allocator)
 		mem.scratch_allocator_init(&cell.dll_temp_allocator, runtime.DEFAULT_TEMP_ALLOCATOR_BACKING_SIZE, cell.dll_context.allocator)
@@ -173,6 +181,11 @@ destroy_cell:: proc(cell: ^Cell) {
 
 	free_all(cell.cell_context.allocator)
 	free_all(cell.cell_context.temp_allocator) }
+
+
+// Cell shared resources: //
+// * cell
+// * session.symmap
 
 
 cell_thread_proc:: proc(cell: ^Cell) {

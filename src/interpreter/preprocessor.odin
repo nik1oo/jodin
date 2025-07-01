@@ -212,16 +212,19 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	nl(&sb)
 
 	// IMPORT DECLARATIONS //
-	fmt.sbprintln(&sb, "import \"shared:jodin\"")
-	fmt.sbprintln(&sb, "import \"core:io\"")
-	fmt.sbprintln(&sb, "import \"core:os\"")
+	fmt.sbprintln(&sb,
+		"import \"shared:jodin\"\n" +
+		"import \"core:io\"\n" +
+		"import \"core:os\"\n" +
+		"import \"core:sync\"")
 	for _, other_cell in cell.session.cells do if other_cell.loaded do fmt.sbprintln(&sb, other_cell.imports_string)
 	append(&sb.buf, ..import_stmts.buf[:])
 	nl(&sb)
 
 	// CELL VARIABLES //
 	fmt.sbprintln(&sb,
-		"@(export) __cell__: ^jodin.Cell = nil")
+		"@(export) __cell__: ^jodin.Cell = nil\n" +
+		"__data_mutex__: ^sync.Mutex = nil")
 	fmt.sbprintln(&sb,
 		"__stdout__, __stderr__, __iopub__, __original_stdout__, __original_stderr__: os.Handle")
 	fmt.sbprintln(&sb,
@@ -275,7 +278,10 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	fmt.sbprintln(&sb,
 		"@(export) __init__:: proc(_cell: ^jodin.Cell, _stdout: os.Handle, _stderr: os.Handle, _iopub: os.Handle, _symmap: ^map[string]rawptr) {")
 	fmt.sbprintln(&sb,
+		"	__data_mutex__ = _cell.session.data_mutex\n" +
+		"	sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)\n" +
 		"	__cell__ = _cell\n" +
+		"	sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)\n" +
 		"	context = __cell__.cell_context\n" +
 		"	__original_stdout__ = os.stdout\n" +
 		"	__original_stderr__ = os.stderr\n" +
@@ -289,6 +295,8 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	// MAIN PROC //
 	fmt.sbprintln(&sb,
 		"@(export) __main__:: proc() {\n" +
+		"	sync.mutex_lock(__data_mutex__); defer sync.mutex_unlock(__data_mutex__)\n" if ! cell.tags.async else "" +
+		"	sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)\n" +
 		"	context = __cell__.cell_context\n")
 	for variable in cell.global_variables do if variable.value != "" do fmt.sbprintfln(&sb, "\t%s = %s", variable.name, variable.value)
 	fmt.sbprintln(&sb, strings.to_string(main_stmts))

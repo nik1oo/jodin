@@ -21,6 +21,7 @@ import "core:sys/posix"
 import "core:unicode/utf16"
 import "core:bytes"
 import "core:thread"
+import "core:sync"
 import "internal_pipe"
 import "external_pipe"
 import "poll"
@@ -32,6 +33,9 @@ Procedure:: struct { name: string, type: string, value: string }
 
 // INTERPRETER SESSION //
 Session:: struct {
+	// MUTEX //
+	data_mutex:                     sync.Mutex,
+
 	// ID //
 	name:                           string,
 

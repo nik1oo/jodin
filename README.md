@@ -1,4 +1,4 @@
-
+<!--
 <p align="center">
 	<picture>
 		<source media="(prefers-color-scheme: light)" srcset="/docs/logo.png">
@@ -6,6 +6,7 @@
 	</picture>
 	<h1 align="center"><b>jodin</b></h1>
 </p>
+-->
 
 A simple Jupyter kernel for the Odin programming language. The main things work, but there are still many bugs. Only works on Windows, as of now.
 

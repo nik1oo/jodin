@@ -28,22 +28,24 @@ VERSION::                        "0.1.0-alpha"
 DEFAULT_CELL_TIMEOUT::           5
 PIPE_TIMEOUT::                   10 * time.Second
 PIPE_DELAY::                     100 * time.Millisecond
+STACK_SIZE::                     64 * mem.Megabyte
 KERNEL_SOURCE_PIPE_BUFFER_SIZE:: 64 * mem.Kilobyte
 KERNEL_STDOUT_PIPE_BUFFER_SIZE:: 16 * mem.Kilobyte
 KERNEL_STDERR_PIPE_BUFFER_SIZE:: 16 * mem.Kilobyte
 KERNEL_IOPUB_PIPE_BUFFER_SIZE::  16 * mem.Megabyte
 CELL_STDOUT_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_STDERR_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
-CELL_ARENA_SIZE::                10 * mem.Megabyte
-
+CELL_ARENA_SIZE::                2 * mem.Megabyte
 
 main:: proc() {
-	err: Error
 	fmt.println(ANSI_GREEN, "[JodinInterpreter]", ANSI_RESET, " jodin: ", "Version: ", VERSION, sep = "")
+	alo: Allocator
+	allocator_init(&alo, disable_free=true, print_allocations=true, backing_allocator=context.allocator)
+	context.allocator = allocator(&alo)
 	session: ^Session = new(Session)
 	start_session(session)
 	defer end_session(session)
-	err = connect_to_ipy_kernel(session)
+	err: = connect_to_ipy_kernel(session)
 	if err != NOERR { error_handler(err, "Could not connect to jodin kernel."); return }
 	counter: uint = 1
 	for {
@@ -51,7 +53,8 @@ main:: proc() {
 		session_output_to_console(session)
 		response, _ := strings.builder_make_len_cap(0, CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
 		frontend_cell_id, code_raw, _: = receive_message(session)
-		session_output_to_frontend(session)
+		// TEMP
+		// session_output_to_frontend(session)
 		cell_stdout, cell_stderr, cell_iopub: string
 		if slice.contains([]string{"exit", "quit"}, code_raw) do break
 		cell: ^Cell
