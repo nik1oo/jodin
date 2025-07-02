@@ -21,6 +21,12 @@ A ptototype of an environment for interactive and live programming in Odin. A RE
 - Cells have their own context.
 -->
 
+- [Website](https://nik1oo.github.io/jodin/)
+- [Installation](https://nik1oo.github.io/jodin/installation/)
+- [API Reference](https://nik1oo.github.io/jodin/api_reference/)
+
+<!--
+
 <h2 align="center">Installation</h2>
 
 Requirements:
@@ -90,3 +96,4 @@ To open the demo notebook:
 jupyter notebook examples/demo.ipynb
 ```
 
+-->
