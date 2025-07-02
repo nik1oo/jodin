@@ -36,14 +36,6 @@ node_to_string:: proc(pp: ^Preprocessor, node: ast.Node) -> string {
 	return pp.file.src[node.pos.offset:node.end.offset] }
 
 
-stmt_to_string:: proc(pp: ^Preprocessor, stmt: ^ast.Stmt) -> string {
-	return node_to_string(pp, stmt) if stmt != nil else "" }
-
-
-expr_to_string:: proc(pp: ^Preprocessor, expr: ^ast.Expr) -> string {
-	return node_to_string(pp, expr) if expr != nil else "" }
-
-
 preprocess_node:: proc(pp: ^Preprocessor, node: ast.Node, async: bool = false) -> string {
 	// TODO Throw error if an external variable is found and the current scope is async. //
 	hat_points: [dynamic]int = make_dynamic_array([dynamic]int)
@@ -273,16 +265,16 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 			fmt.sbprintfln(
 				&main_stmts,
 				`	for %s; %s; %s %s`,
-				stmt_to_string(&pp, decl.init),
-				expr_to_string(&pp, decl.cond),
-				stmt_to_string(&pp, decl.post),
+				decl.init != nil ? preprocess_node(&pp, decl.init) : ``,
+				decl.cond != nil ? preprocess_node(&pp, decl.cond) : ``,
+				decl.post != nil ? preprocess_node(&pp, decl.post) : ``,
 				`{`)
 			if synced do fmt.sbprintln(&main_stmts,
 				`		sync.ticket_mutex_lock(__data_mutex__)` + NL +
 				`		defer sync.ticket_mutex_unlock(__data_mutex__)`)
 			fmt.sbprintln(
 				&main_stmts,
-				node_to_string(&pp, decl.body))
+				decl.body != nil ? preprocess_node(&pp, decl.body) : ``)
 			fmt.sbprintln(
 				&main_stmts,
 				`	}`)
@@ -373,8 +365,8 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		}`)
 
 	// GLOBAL CONSTANTS //
-	for _, other_cell in cell.session.cells do if other_cell.loaded do for type in other_cell.global_constants_string do fmt.sbprintln(&sb, type)
-	for type in cell.global_constants_string do fmt.sbprintln(&sb, type)
+	for _, other_cell in cell.session.cells do if other_cell.loaded do fmt.sbprintln(&sb, other_cell.global_constants_string)
+	fmt.sbprintln(&sb, strings.to_string(global_constant_stmts))
 
 	// INIT PROC //
 	fmt.sbprintln(&sb, `
@@ -413,9 +405,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	cell.imports_string = strings.to_string(import_stmts)
 	cell.global_constants_string = strings.to_string(global_constant_stmts)
 
-	// fmt.eprintln(ANSI_BOLD_BLUE, "-----------------------------------------------------")
-	// fmt.eprintln(cell.code)
-	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	// print_cell_code(cell)
 
 	return NOERR }
 

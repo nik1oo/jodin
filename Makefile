@@ -6,7 +6,7 @@ main:
 	"C:\Program Files\Python313\python.exe" -m pip install ./src/ipy_kernel
 	jupyter kernelspec install ./src/ipy_kernel/src/jodin --name=jodin
 	clear
-	jupyter notebook examples/glfw.ipynb
+	jupyter notebook examples/demo.ipynb
 
 
 test:

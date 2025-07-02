@@ -8,6 +8,9 @@
 
 A ptototype of an environment for interactive and live programming in Odin. A REPL interpreter and a Jupyter kernel.
 
+> [!WARNING]
+> Only works on Windows. There are some bugs. It's a prototype.
+
 <!---
 <h2 align="center">Showcase</h2>
 
