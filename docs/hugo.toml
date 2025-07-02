@@ -1,0 +1,4 @@
+baseURL = 'https://jodin.org/'
+languageCode = 'en-us'
+title = 'Jodin'
+theme = 'ardeidae'

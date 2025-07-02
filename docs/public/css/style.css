@@ -1,0 +1,290 @@
+/* general */
+
+html,
+body {
+    color: whitesmoke;
+    margin: 0;
+    padding: 0;
+    background-color: #1E5085;
+    background-color: black;
+}
+
+code {
+    display: block;
+    font-family: "Ubuntu Mono", monospace;
+    color: #CCCCCC;
+/*    background-color: #182028;*/
+    outline: 1pt solid #242F3F;
+    outline-offset: 2pt;
+    border-radius: 2pt;
+    padding: 4pt;
+/*    margin: 8pt;*/
+}
+
+.center {
+    display: block;
+    margin-left: 50%;
+    margin-right: 50%;
+    image-rendering: pixelated;
+}
+
+a {
+    color: #A84034;
+}
+
+hr {
+    color: whitesmoke
+}
+
+/* landing page */
+
+#landing {
+    display: flex;
+    height: 100vh;
+}
+
+#landing a {
+    text-decoration: none;
+    color: whitesmoke;
+}
+
+#landing ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#landing li {
+    margin-bottom: 2rem;
+    padding: 0;
+}
+
+#landing time {
+    font-weight: normal;
+    font-size: 1.5rem;
+    color: #A84034;
+}
+
+#landing-content {
+    max-height: 100vh;
+    width: 45vw;
+    overflow: auto;
+    /* box-shadow: -3px 0px 15px 0px rgba(0, 0, 0, 0.50); */
+    padding: 0 0 0 2rem;
+}
+
+#landing-content footer {
+    color: whitesmoke;
+    font-weight: normal;
+}
+
+#landing-content footer a {
+    text-decoration: underline;
+    color: #A84034;
+}
+
+#posts-container {
+    font-size: 2rem;
+    font-family: "Ubuntu Mono", monospace;
+    font-weight: bold;
+    margin-top: 3rem;
+    padding: 0 10rem 0 0;
+}
+
+#posts-container a:hover {
+    text-decoration: underline;
+}
+
+#landing-canva {
+/*    position: absolute;*/
+    width: 100%;
+}
+
+#landing-canva canvas {
+    display: block;
+    width: 100%;
+}
+
+#landing-content {
+    max-height: unset;
+    width: 320pt;
+    padding: 0pt;
+}
+
+/* header */
+
+header {
+    max-width: 800px;
+    margin: 1rem auto 0 auto;
+    line-height: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#site-title {
+    display: inline-block;
+    color: whitesmoke;
+    border: 2px solid whitesmoke;
+    padding: 0.6rem;
+    text-transform: uppercase;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-decoration: none;
+
+}
+
+#site-title:hover {
+    color: #A84034;
+    background-color: whitesmoke;
+}
+
+.header-group {
+    width: fit-content;
+    font-weight: bold;
+    padding: 0.2rem 0.6rem;
+}
+
+.header-icon {
+    text-decoration: none;
+    color: whitesmoke;
+    padding: 0 0.3rem;
+}
+
+.header-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* post page */
+
+#post {
+    margin: auto;
+    font-family: "Noto Sans", sans-serif;
+    max-width: 800px;
+    font-size: 11pt;
+}
+
+#post-title {
+    color: whitesmoke;
+    margin: 4rem 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+#post time {
+    color: #A84034;
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+#post-content {
+    text-align: justify;
+    text-justify: inter-word;
+}
+
+#after-post {
+    font-family: "Noto Sans", sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    text-align: center;
+    margin: 5rem auto;
+}
+
+#reply-by-email {
+    text-align: center;
+    color: whitesmoke;
+    margin-top: 2rem;
+}
+
+#reply-by-email a {
+    border: 2px solid #A84034;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 0.6rem;
+}
+
+#reply-by-email a:hover {
+    background-color: #A84034;
+    color: #1E5085;
+}
+
+
+/* footer */
+
+footer {
+    font-family: "Ubuntu Mono", monospace;
+    color: whitesmoke;
+    opacity: 0.75;
+    font-size: 1rem;
+    margin: 0 auto;
+    padding: 3rem 0 2rem 0;
+    text-align: center;
+}
+
+/* others */
+
+img {
+    max-width: 100%;
+}
+
+.chroma {
+    font-family: "Ubuntu Mono", monospace;
+    font-size: 1rem;
+    padding: 1.5rem 1rem;
+    border-radius: 3px;
+    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* media queries */
+
+@media only screen and (max-width: 992px) {
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0 1rem;
+    }
+
+    .header-group {
+        padding: 1rem 0 0 0;
+    }
+
+    #landing {
+        flex-direction: column;
+        height: unset;
+    }
+
+    #landing header {
+        margin-left: 0;
+        padding-left: 2rem;
+    }
+
+    #landing-canva {
+        width: 100%;
+        height: 15rem;
+    }
+
+    #landing-content {
+        max-height: unset;
+        width: 100vw;
+        overflow: unset;
+        /* box-shadow: 0px -3px 15px 0px rgba(0, 0, 0, 0.50); */
+        padding: 0;
+    }
+
+    #posts-container {
+        margin-top: 4rem;
+        padding: 0 2rem;
+    }
+
+    #post {
+        padding: 0 1rem;
+    }
+
+    #after-post {
+        padding: 0 2rem;
+    }
+}

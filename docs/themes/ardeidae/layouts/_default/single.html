@@ -1,0 +1,24 @@
+{{ define "main" }}
+
+<section id="post">
+    <h1 id="post-title">{{ .Title }}</h1>
+    <time>
+        {{ .Date.Format (.Site.Params.dateform | default "2006-01-02") }}
+    </time>
+    <hr />
+    <div id="post-content">
+        {{ .Content }}
+    </div>
+</section>
+{{ if .Site.Params.email }}
+<section id="after-post">
+    <p>If you have any comments or questions about this post, feel free to:</p>
+    <div id="reply-by-email">
+        <a href="mailto:{{ .Site.Params.email }}?subject=Reply to: {{.Page.Title}}">Reply by
+            email</a>
+    </div>
+</section>
+{{ end }}
+
+
+{{ end }}
