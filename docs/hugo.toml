@@ -6,3 +6,6 @@ theme = 'ardeidae'
 [caches]
   [caches.images]
     dir = ':cacheDir/images'
+
+[params]
+  github = 'https://github.com/nik1oo/jodin'
