@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>API Reference</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/fonts.css">
+    <link defer rel="stylesheet" href="/css/syntax.css">
+
+</head><body><header>
+    <a id="site-title" href="/">
+        Jodin
+    </a>
+    <section id="social-links" class="header-group">
+        <a href=ZgotmplZ class="header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github"
+                viewBox="0 0 16 16">
+                <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+            </svg>
+        </a>
+
+        <a href="/index.xml" class="header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-rss"
+                viewBox="0 0 16 16">
+                <path
+                    d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
+                <path
+                    d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1zm0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1z" />
+            </svg>
+        </a>
+    </section>
+</header>
+
+<section id="post">
+    <h1 id="post-title">API Reference</h1>
+    <time>
+        2025-07-02
+    </time>
+    <hr />
+    <div id="post-content">
+        <p>The Jodin package should be located in <strong>Odin/shared/jodin</strong>, which is implicitly imported in every cell. Everything here is under namespace <strong>jodin</strong>.</p>
+<hr>
+<h2 id="cell_info">Cell_Info</h2>
+<pre tabindex="0"><code>Cell_Info :: struct {
+	id:   string,
+	name: string,
+	code: string
+}
+</code></pre><p>Object holding information about the current cell.</p>
+<hr>
+<h2 id="audio_format">Audio_Format</h2>
+<pre tabindex="0"><code>Audio_Format :: enum u8 {
+	AAC,
+	MP3,
+	WAV,
+	WEBM
+}
+</code></pre><p>Audio formats supported by the Jupyter front-end.</p>
+<hr>
+<h2 id="image_format">Image_Format</h2>
+<pre tabindex="0"><code>Image_Format :: enum u8 {
+	PNG,
+	JPEG,
+	GIF,
+	WEBP
+}
+</code></pre><p>Image formats supported by the Jupyter front-end.</p>
+<hr>
+<h2 id="cell_info-1">cell_info</h2>
+<pre tabindex="0"><code>cell_info :: proc() -&gt; Cell_Info {…}
+</code></pre><p>Get info about the current cell.</p>
+<hr>
+<h2 id="clear_output">clear_output</h2>
+<pre tabindex="0"><code>clear_output :: proc(
+	wait: bool = false
+) -&gt; bool {…}
+</code></pre><p>Clear the output currently visible in the front-end. If <strong>wait</strong> is <strong>true</strong>, the output will be cleared only when new output becomes available.</p>
+<hr>
+<h2 id="display_audio">display_audio</h2>
+<pre tabindex="0"><code>display_audio :: proc(
+	data: []u8,
+	format: Audio_Format,
+	element_id: string = &#34;&#34;,
+	loc: = #caller_location
+) -&gt; (err: Error) {…}
+</code></pre><p>Display audio in the front-end.</p>
+<hr>
+<h2 id="display_image">display_image</h2>
+<pre tabindex="0"><code>display_image :: proc{
+	display_image_from_data_and_format_and_size,
+	display_image_from_data_and_format,
+	display_image_from_filepath,
+	display_image_from_filepath_and_size
+}
+</code></pre><p>Display image in the front-end.</p>
+<hr>
+<h2 id="display_image_from_data_and_format_and_size">display_image_from_data_and_format_and_size</h2>
+<pre tabindex="0"><code>display_image_from_data_and_format_and_size :: proc(
+	data: []u8,
+	format: Image_Format,
+	size: [2]uint,
+	display_id: string = &#34;&#34;,
+	loc: = #caller_location
+) -&gt; (err: Error) {…}
+</code></pre><hr>
+<h2 id="display_image_from_data_and_format">display_image_from_data_and_format</h2>
+<pre tabindex="0"><code>display_image_from_data_and_format :: proc(
+	data: []u8,
+	format: Image_Format,
+	display_id: string = &#34;&#34;,
+	loc: = #caller_location
+) -&gt; (err: Error) {…}
+</code></pre><hr>
+<h2 id="display_image_from_filepath_and_size">display_image_from_filepath_and_size</h2>
+<pre tabindex="0"><code>display_image_from_filepath_and_size :: proc(
+	path: string,
+	size: [2]uint,
+	display_id: string = &#34;&#34;,
+	loc: = #caller_location
+) -&gt; (err: Error) {…}
+</code></pre><hr>
+<h2 id="display_image_from_filepath">display_image_from_filepath</h2>
+<pre tabindex="0"><code>display_image_from_filepath:: proc(
+	path: string,
+	display_id: string = &#34;&#34;,
+	loc: = #caller_location
+) -&gt; (err: Error) {…}
+</code></pre><hr>
+<h2 id="inspect">inspect</h2>
+<pre tabindex="0"><code>inspect:: proc(
+	x: $T
+) {…}
+</code></pre><p>Pretty-print information about an object.</p>
+<hr>
+<h2 id="inspect_detailed">inspect_detailed</h2>
+<pre tabindex="0"><code>inspect_detailed:: proc(
+	x: $T
+) {…}
+</code></pre><p>Pretty-print detailed information about an object.</p>
+<hr>
+
+    </div>
+</section>
+
+
+
+<footer>
+    Powered by <a href="https://gohugo.io/">Hugo</a>, using theme <a
+        href="https://github.com/LuisSousaRego/Ardeidae">Ardeidae</a>
+</footer></body>
+
+</html>

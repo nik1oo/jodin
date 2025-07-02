@@ -12,7 +12,7 @@
                     <li class="post">
                     {{- partial "main.html" . -}}
                     </li>
-                    {{ range .Site.RegularPages.ByPublishDate.Reverse }}
+                    {{ range .Site.RegularPages.ByPublishDate }}
                     <li class="post">
                         <a href="{{ .Permalink }}">
                             {{ .Title }}

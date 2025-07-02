@@ -4,8 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Tags</title>
-    <link rel="alternate" type="application/rss+xml" href="http://localhost:1313/tags/index.xml" title="Jodin" />
+    <title>Live Coding</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/fonts.css">
     <link defer rel="stylesheet" href="/css/syntax.css">
@@ -35,47 +34,38 @@
     </section>
 </header>
 
-<section id="content" class="page-content">
-    <table>
-        
-        <tr>
-            <td class="post-date-time date-time-font">
-                <time>2025-07-02</time>
-            </td>
-            <td class="post">
-                <a href="http://localhost:1313/live_coding/">Live Coding</a>
-            </td>
-        </tr>
-        
-        <tr>
-            <td class="post-date-time date-time-font">
-                <time>2025-07-02</time>
-            </td>
-            <td class="post">
-                <a href="http://localhost:1313/api_reference/">API Reference</a>
-            </td>
-        </tr>
-        
-        <tr>
-            <td class="post-date-time date-time-font">
-                <time>2025-07-02</time>
-            </td>
-            <td class="post">
-                <a href="http://localhost:1313/guide/">Guide</a>
-            </td>
-        </tr>
-        
-        <tr>
-            <td class="post-date-time date-time-font">
-                <time>2025-07-02</time>
-            </td>
-            <td class="post">
-                <a href="http://localhost:1313/installation/">Installation</a>
-            </td>
-        </tr>
-        
-    </table>
+<section id="post">
+    <h1 id="post-title">Live Coding</h1>
+    <time>
+        2025-07-02
+    </time>
+    <hr />
+    <div id="post-content">
+        <p>Typically when you execute a cell the kernel will wait for the cell thread to finish before displaying its output and allowing you to execute another cell. This is <em>synchronous execution</em> and it is the default. Jodin also supports <em>asynchronous execution</em> where you can execute a cell and leave its thread running for as long as it wants to or until you terminate it from another cell.</p>
+<p>To make a cell execute asynchronously, add the <code>#+async</code> directive at the top. To prevent race-conditions, this cell won&rsquo;t be allowed to access external variables in its root scope, and any variables declared there will not be exported to other cells.</p>
+<pre tabindex="0"><code>#+async
+…
+</code></pre><p>In order for this cell to interact with other cells, you need to declare at least one scope with the <code>sync</code> label.</p>
+<pre tabindex="0"><code>#+async
+…
+sync: {
+	…
+}
+…
+</code></pre><p>Every Jodin session has a <code>Ticket_Mutex</code> called <code>__data_mutex__</code>, which is acquired at the beginning of the cell and released at the end, to allow the synchonous cells to share the same memory as asynchronous cells. In asynchronous cells the <code>__data_mutex__</code> is acquired at the beginning of every <code>sync</code> scope and released at it&rsquo;s end.</p>
+<p>So if an asynchronous cell with a <code>sync</code> loop is running, and you execute a synchronous cell, the asynchronous cell will halt at the end of the current iteration until the synchronous cell is executed.</p>
+<hr>
+<h2 id="examples">Examples</h2>
+<p>There are several notebooks in the <code>examples</code> folder of the Jodin repository which show how this feature can be used for live coding.</p>
+<ul>
+<li>The <code>glfw.ipynb</code> notebook shows how you can update the contents of a GLFW window live.</li>
+<li>The <code>miniaudio.ipynb</code> notebook shows how you can live-program sound.</li>
+</ul>
+
+    </div>
 </section>
+
+
 
 <footer>
     Powered by <a href="https://gohugo.io/">Hugo</a>, using theme <a
