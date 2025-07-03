@@ -8,6 +8,8 @@ main:
 	clear
 	jupyter notebook examples/demo.ipynb
 
+test_notebooks:
+	odin test src/interpreter -define:ODIN_TEST_THREADS=1
 
 test:
 	clear

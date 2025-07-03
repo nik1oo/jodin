@@ -88,11 +88,8 @@ end_session:: proc(session: ^Session) -> (err: Error) {
 
 
 session_output_to_frontend:: proc(session: ^Session) -> (err: Error) {
-	err = os.Error(os.General_Error.Closed)
-	if session.stdout_pipe.input_handle != os.INVALID_HANDLE do os.stdout = auto_cast session.stdout_pipe.input_handle
-	else do return
-	if session.stderr_pipe.input_handle != os.INVALID_HANDLE do os.stderr = auto_cast session.stderr_pipe.input_handle
-	else do return
+	os.stdout = auto_cast session.stdout_pipe.input_handle
+	os.stderr = auto_cast session.stderr_pipe.input_handle
 	return NOERR }
 session_output_to_console:: proc(session: ^Session) -> (err: Error) {
 	os.stderr = session.os_stderr

@@ -22,6 +22,7 @@ import "core:bytes"
 import "core:thread"
 import "internal_pipe"
 import "external_pipe"
+import "ipynb"
 
 
 VERSION::                        "0.1.0-alpha"
@@ -37,41 +38,50 @@ CELL_STDOUT_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_STDERR_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_ARENA_SIZE::                32 * mem.Megabyte
 
+
 main:: proc() {
-	fmt.println(ANSI_GREEN, "[JodinInterpreter]", ANSI_RESET, " jodin: ", "Version: ", VERSION, sep = "")
-	alo: Allocator
-	allocator_init(&alo, disable_free=true, print_allocations=true, backing_allocator=context.allocator)
-	// TEMP
-	// context.allocator = allocator(&alo)
-	session: ^Session = new(Session)
-	start_session(session)
-	defer end_session(session)
-	err: = connect_to_ipy_kernel(session)
-	if err != NOERR { error_handler(err, "Could not connect to jodin kernel."); return }
-	counter: uint = 1
-	for {
-		defer { counter += 1 }
-		session_output_to_console(session)
-		response, _ := strings.builder_make_len_cap(0, CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
-		frontend_cell_id, code_raw, _: = receive_message(session)
-		// TEMP
-		// session_output_to_frontend(session)
-		cell_stdout, cell_stderr, cell_iopub: string
-		if slice.contains([]string{"exit", "quit"}, code_raw) do break
-		cell: ^Cell
-		if frontend_cell_id not_in session.cells do cell, err = compile_new_cell(session, frontend_cell_id, code_raw, counter)
-		else do cell, err = recompile_cell(session, frontend_cell_id, code_raw)
-		os.flush(os.stdout)
-		if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
-		session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
-		session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
-		fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")
-		fmt.sbprintln(&response, ANSI_RED, session_stderr, cell_stderr, ANSI_RESET, sep = "")
-		err = external_pipe.write_string(&session.kernel_stdout_pipe, string_or_newline(strings.to_string(response)), external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
-		assert(err == NOERR)
-		if len(cell_iopub) > 0 {
-			external_pipe.write_bytes(&session.kernel_iopub_pipe, transmute([]u8)cell_iopub, external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
-			assert(err == NOERR) }
-		err = external_pipe.write_bytes(&session.kernel_iopub_pipe, make_empty_message(), external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
-		assert(err == NOERR) } }
+	data, ok: = os.read_entire_file_from_filename("../../examples/demo.ipynb")
+	assert(ok)
+	parser: = ipynb.make_parser(data)
+	notebook: = ipynb.make_notebook()
+	ipynb.parse_notebook(&parser, &notebook)
+}
+
+
+// main:: proc() {
+// 	fmt.println(ANSI_GREEN, "[JodinInterpreter]", ANSI_RESET, " jodin: ", "Version: ", VERSION, sep = "")
+// 	alo: Allocator
+// 	allocator_init(&alo, disable_free=true, print_allocations=true, backing_allocator=context.allocator)
+// 	// TEMP
+// 	// context.allocator = allocator(&alo)
+// 	session: ^Session = new(Session)
+// 	start_session(session)
+// 	defer end_session(session)
+// 	err: = connect_to_ipy_kernel(session)
+// 	if err != NOERR { error_handler(err, "Could not connect to jodin kernel."); return }
+// 	counter: uint = 1
+// 	for {
+// 		defer { counter += 1 }
+// 		session_output_to_console(session)
+// 		response, _ := strings.builder_make_len_cap(0, CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
+// 		frontend_cell_id, code_raw, _: = receive_message(session)
+// 		session_output_to_frontend(session)
+// 		cell_stdout, cell_stderr, cell_iopub: string
+// 		if slice.contains([]string{"exit", "quit"}, code_raw) do break
+// 		cell: ^Cell
+// 		if frontend_cell_id not_in session.cells do cell, err = compile_new_cell(session, frontend_cell_id, code_raw, counter)
+// 		else do cell, err = recompile_cell(session, frontend_cell_id, code_raw)
+// 		os.flush(os.stdout)
+// 		if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
+// 		session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
+// 		session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
+// 		fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")
+// 		fmt.sbprintln(&response, ANSI_RED, session_stderr, cell_stderr, ANSI_RESET, sep = "")
+// 		err = external_pipe.write_string(&session.kernel_stdout_pipe, string_or_newline(strings.to_string(response)), external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
+// 		assert(err == NOERR)
+// 		if len(cell_iopub) > 0 {
+// 			external_pipe.write_bytes(&session.kernel_iopub_pipe, transmute([]u8)cell_iopub, external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
+// 			assert(err == NOERR) }
+// 		err = external_pipe.write_bytes(&session.kernel_iopub_pipe, make_empty_message(), external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
+// 		assert(err == NOERR) } }
 
