@@ -39,9 +39,11 @@ allocator_proc:: proc(
 	allocator := cast(^Allocator)allocator_data
 	switch mode {
 	case .Alloc, .Alloc_Non_Zeroed:
-		if allocator.print_allocations do allocator.session.error_handler(nil, "Allocated %d bytes.", size, loc=loc)
+		// if allocator.print_allocations do allocator.session.error_handler(nil, "Allocated %d bytes.", size, loc=loc)
 		allocator.total_memory_allocated += cast(i64)size
-		return mem.alloc_bytes(size, alignment, allocator.backing, loc)
+		result, error: = mem.alloc_bytes(size, alignment, allocator.backing, loc)
+		// if error != runtime.Allocator_Error.None do allocator.session.error_handler(nil, "Failed to allocate %d bytes: %v.", size, error, loc=loc)
+		return result, error
 	case .Free:
 		if ! allocator.disable_free do return nil, mem.free(old_memory, allocator.backing, loc)
 		else do return nil, nil

@@ -57,6 +57,16 @@ Error:: union {
 	return err }
 
 
+@(private) assert_handler:: proc(condition: bool, err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error {
+	if condition do return NOERR
+	else do return error_handler(err, msg, ..args, loc=loc) }
+
+
+@(private) report_alloc_error:: proc(loc: runtime.Source_Code_Location, size: int, error: runtime.Allocator_Error, user_ptr: rawptr) {
+	session: = cast(^Session)user_ptr
+	session.error_handler(error, "Failed to allocate %d bytes: %v", size, error, loc) }
+
+
 @(private) source_code_location_from_tokenizer_pos:: proc(pos: tokenizer.Pos) -> runtime.Source_Code_Location {
 	return runtime.Source_Code_Location{ file_path = pos.file, line = auto_cast pos.line, column = auto_cast pos.column } }
 

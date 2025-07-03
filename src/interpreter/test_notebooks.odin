@@ -9,6 +9,7 @@ import "core:log"
 import "core:fmt"
 import "core:math/rand"
 import "ipynb"
+import "reporting_allocator"
 
 
 NOTEBOOKS_PATH:: "examples"
@@ -21,7 +22,16 @@ NOTEBOOKS_PATH:: "examples"
 	return err }
 
 
+@(private) test_report_alloc_error:: proc(loc: runtime.Source_Code_Location, size: int, error: runtime.Allocator_Error, user_ptr: rawptr) {
+	test_error_handler(error, "Failed to allocate %d bytes: %v", size, error, loc) }
+
+
 test_notebook:: proc(t: ^testing.T, notebook_name: string) {
+	context.allocator = reporting_allocator.wrap_allocator(
+		wrapped_allocator=context.allocator,
+		report_alloc_error=test_report_alloc_error,
+		allocator_allocator=runtime.heap_allocator())
+
 	session: ^Session = new(Session)
 	start_session(session, test_error_handler)
 	log.info("Started session.")
@@ -44,7 +54,8 @@ test_notebook:: proc(t: ^testing.T, notebook_name: string) {
 		// log.info("Compiling\n", notebook_cell.source)
 		cell_id: string = fmt.aprintf("%d", rand.int31())
 		cell, err: = compile_new_cell(session, cell_id, notebook_cell.source, cast(uint)i)
-		testing.expectf(t, err == NOERR, "Cell %d failed with error: %v. Cell source:\n%s", i, err, notebook_cell.source)
+		// testing.expectf(t, err == NOERR, "Cell %d failed with error: %v. Cell source:\n%s", i, err, cell.code)
+		testing.expectf(t, err == NOERR, "Cell %d failed with error: %v.", i, err)
 		// log.info(err)
 		// execute cell and assert that it completed //
 	}

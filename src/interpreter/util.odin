@@ -98,3 +98,11 @@ string_or_newline:: proc(str: string) -> string {
 
 in_range:: proc(x, a, b: int) -> bool { return (x >= a) && (x < b) }
 
+
+string_is_corrupt:: proc(str: string) -> bool {
+	return strings.contains_rune(str, '\x00') }
+
+
+string_builder_is_corrupt:: proc(sb: strings.Builder) -> bool {
+	return string_is_corrupt(strings.to_string(sb)) }
+

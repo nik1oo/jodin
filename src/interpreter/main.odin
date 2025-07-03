@@ -23,6 +23,7 @@ import "core:thread"
 import "internal_pipe"
 import "external_pipe"
 import "ipynb"
+import "reporting_allocator"
 
 
 VERSION::                        "0.1.0-alpha"
@@ -49,12 +50,12 @@ CELL_ARENA_SIZE::                32 * mem.Megabyte
 
 
 main:: proc() {
+	context.allocator = reporting_allocator.wrap_allocator(
+		wrapped_allocator=context.allocator,
+		report_alloc_error=report_alloc_error,
+		allocator_allocator=runtime.heap_allocator())
 	fmt.println(ANSI_GREEN, "[JodinInterpreter]", ANSI_RESET, " jodin: ", "Version: ", VERSION, sep = "")
-	alo: Allocator
 	session: ^Session = new(Session)
-	allocator_init(&alo, session, disable_free=true, print_allocations=true, backing_allocator=context.allocator)
-	// TEMP
-	// context.allocator = allocator(&alo)
 	start_session(session, error_handler)
 	defer end_session(session)
 	err: = connect_to_ipy_kernel(session)

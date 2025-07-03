@@ -1,0 +1,9 @@
+C:/Code/jodin/temp/session_14_31_26/cell_14_31_27_5/cell_14_31_27_5.odin(48:1) Syntax Error: Expected a statement, got '<' 
+	<><	 ole_gray_beard, _ = os.read_entire_file_from_filena ... 
+	^ 
+C:/Code/jodin/temp/session_14_31_26/cell_14_31_27_5/cell_14_31_27_5.odin(51:1) Syntax Error: Expected a statement, got '>' 
+	>< 
+	^ 
+C:/Code/jodin/temp/session_14_31_26/cell_14_31_27_5/cell_14_31_27_5.odin(55:1) Syntax Error: Expected a statement, got '>' 
+	> 
+	^ 

@@ -36,7 +36,7 @@ node_to_string:: proc(pp: ^Preprocessor, node: ast.Node) -> string {
 	return pp.file.src[node.pos.offset:node.end.offset] }
 
 
-preprocess_node:: proc(pp: ^Preprocessor, node: ast.Node, async: bool = false) -> string {
+preprocess_node:: proc(pp: ^Preprocessor, node: ast.Node, async: bool = false) -> (node_string: string) {
 	// TODO Throw error if an external variable is found and the current scope is async. //
 	hat_points: [dynamic]int = make_dynamic_array([dynamic]int)
 	for i in 0..<len(pp.external_variable_nodes) {
@@ -51,7 +51,9 @@ preprocess_node:: proc(pp: ^Preprocessor, node: ast.Node, async: bool = false) -
 		fmt.sbprint(&sb, '^')
 		i = hat_point }
 	if i <= node.end.offset do fmt.sbprint(&sb, pp.file.src[i:node.end.offset])
-	return strings.to_string(sb) }
+	node_string = strings.clone(strings.to_string(sb))
+	if string_is_corrupt(node_string) do pp.cell.session.error_handler(General_Error.Preprocessor_Error, "Node string is corrupt.")
+	return node_string }
 
 
 stub_error_handler:: proc(pos: tokenizer.Pos, fmt: string, args: ..any) {}
@@ -122,6 +124,8 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	global_procedure_stmts:=        strings.builder_make_len_cap(0, 32 * mem.Kilobyte)
 	main_stmts:=                    strings.builder_make_len_cap(0, 32 * mem.Kilobyte)
 	import_stmts:=                  strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
+
+	assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.")
 
 	// ASSEMBLE PREPROCESSOR INPUT //
 	src: = insert_package_decl(cell.code_raw, cell.name)
@@ -238,31 +242,37 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 						case ^ast.Basic_Lit:
 							if inferred_type do if ! infer_basic_lit_type(value, &type_string) do return session.error_handler(General_Error.Preprocessor_Error, "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string, correct_raw_code_pos(decl.pos))
 							if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = preprocess_node(&pp, decl.values[i]) })
-							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node))
+							else {
+								fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node))
+								assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.") }
 						case ^ast.Comp_Lit, ^ast.Ident, ^ast.Call_Expr, ^ast.Binary_Expr, ^ast.Unary_Expr, ^ast.Paren_Expr, ^ast.Deref_Expr, ^ast.Auto_Cast:
 							if inferred_type do return session.error_handler(General_Error.Preprocessor_Error, "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string, correct_raw_code_pos(decl.pos))
 							else if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = preprocess_node(&pp, decl.values[i]) })
-							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``)
+							else {
+								fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``)
+								assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.") }
 						case ^ast.Struct_Type, ^ast.Proc_Lit:
 							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
       						case:
 							return session.error_handler(General_Error.Preprocessor_Error, "Unhandled mutable value declaration %s of type %v.", preprocess_node(&pp, decl.values[i]), value) }
 					else {
 						if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = "" })
-							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``) } } }
+							else {
+								fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``)
+								assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.") } } } }
 		case ^ast.Import_Decl:
 			fmt.sbprintln(&import_stmts, `		`, preprocess_node(&pp, decl_node), sep=``)
   		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', preprocess_node(&pp, decl_node))
+			assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.")
 		case ^ast.For_Stmt:
   			label, synced: = stmt_label(&pp, decl), node_is_synced(&pp, decl_node)
-  			if (label != "" && ! synced) do fmt.sbprintf(
-  				&main_stmts,
-  				`	%s: `,
-  				label)
-  			else do fmt.sbprint(
-  				&main_stmts,
-  				`	`)
+  			if (label != "" && ! synced) {
+  				fmt.sbprintf(&main_stmts, `	%s: `, label)
+				assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.") }
+  			else {
+  				fmt.sbprint(&main_stmts, `	`)
+				assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.") }
 			fmt.sbprintfln(
 				&main_stmts,
 				`	for %s; %s; %s %s`,
@@ -270,25 +280,33 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 				decl.cond != nil ? preprocess_node(&pp, decl.cond) : ``,
 				decl.post != nil ? preprocess_node(&pp, decl.post) : ``,
 				`{`)
-			if synced do fmt.sbprintln(&main_stmts,
-				`		sync.ticket_mutex_lock(__data_mutex__)` + NL +
-				`		defer sync.ticket_mutex_unlock(__data_mutex__)`)
+			assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.")
+			if synced {
+				fmt.sbprintln(&main_stmts,
+					`		sync.ticket_mutex_lock(__data_mutex__)` + NL +
+					`		defer sync.ticket_mutex_unlock(__data_mutex__)`)
+				assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.") }
 			fmt.sbprintln(
 				&main_stmts,
 				decl.body != nil ? preprocess_node(&pp, decl.body) : ``)
+			assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.")
 			fmt.sbprintln(
 				&main_stmts,
 				`	}`)
-  		case ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.Range_Stmt, ^ast.Unroll_Range_Stmt:
+		 	assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.")
+ 		case ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.Range_Stmt, ^ast.Unroll_Range_Stmt:
   			label, synced: = stmt_label(&pp, decl), node_is_synced(&pp, decl_node)
-			if synced do fmt.sbprintln(&main_stmts,
-				`sync.ticket_mutex_lock(__data_mutex__)`)
-			fmt.sbprintln(&main_stmts, `
-				`, strings.concatenate({(label != "" && ! synced) ? fmt.aprintf("%s: ", label) : "", preprocess_node(&pp, decl_node)}), sep=``)
-			if synced do fmt.sbprintln(&main_stmts, `
-				sync.ticket_mutex_unlock(__data_mutex__)`)
+			if synced {
+				fmt.sbprintln(&main_stmts, `sync.ticket_mutex_lock(__data_mutex__)`)
+				assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.") }
+			fmt.sbprintln(&main_stmts, ` `, strings.concatenate({(label != "" && ! synced) ? fmt.aprintf("%s: ", label) : "", preprocess_node(&pp, decl_node)}), sep=``)
+			assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.")
+			if synced {
+				fmt.sbprintln(&main_stmts, `sync.ticket_mutex_unlock(__data_mutex__)`)
+				assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.") }
 		case ^ast.Switch_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", preprocess_node(&pp, decl)}))
+			assert_handler(! string_builder_is_corrupt(main_stmts), General_Error.Preprocessor_Error, "main_stmts is corrupt.")
 		case:
 			return session.error_handler(General_Error.Preprocessor_Error, "Undandled declaration %s of type %T.", preprocess_node(&pp, decl_node), decl_node.derived_stmt) }
 
@@ -393,13 +411,16 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	fmt.sbprintln(&sb, `
 			sync.mutex_lock(&__cell__.mutex); defer sync.mutex_unlock(&__cell__.mutex)
 			context = __cell__.cell_context`)
-	for variable in cell.global_variables do if variable.value != "" do fmt.sbprintfln(&sb, "\t%s = %s", variable.name, variable.value)
+	for variable in cell.global_variables {
+		if string_is_corrupt(variable.name) do return session.error_handler(General_Error.Preprocessor_Error, "Variable name string is corrupt.")
+		if string_is_corrupt(variable.value) do return session.error_handler(General_Error.Preprocessor_Error, "Variable value string is corrupt.")
+		if variable.value != "" do fmt.sbprintfln(&sb, "\t%s = %s", variable.name, variable.value) }
+	if string_builder_is_corrupt(main_stmts) do return session.error_handler(General_Error.Preprocessor_Error, "Main statements string is corrupt.")
 	fmt.sbprintln(&sb, strings.to_string(main_stmts))
 	fmt.sbprintln(&sb, `
 			os.stdout = __original_stdout__
 			os.stderr = __original_stderr__
 		}`)
-
 	cell.code = strings.to_string(sb)
 
 	// SAVE THINGS FOR OTHER CELLS //
