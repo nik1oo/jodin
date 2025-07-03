@@ -1,0 +1,9 @@
+C:/Code/jodin/temp/session_12_57_32/cell_12_57_57_129/cell_12_57_57_129.odin(109:45) Syntax Error: Failed to parse file: C:/Code/jodin/temp/session_12_57_32/cell_12_57_57_129/cell_12_57_57_129; invalid token found in file 
+	@(export) unroll_for_statement :: proc() ƒ^ˆ× 
+	                                         ^ 
+C:/Code/jodin/temp/session_12_57_32/cell_12_57_57_129/cell_12_57_57_129.odin(109:44) Syntax Error: Illegal UTF-8 encoding 
+	@(export) unroll_for_statement :: proc() ƒ^ˆ× 
+	                                         ^ 
+C:/Code/jodin/temp/session_12_57_32/cell_12_57_57_129/cell_12_57_57_129.odin(109:46) Syntax Error: Illegal character: ï¿½ (65533) 
+	@(export) unroll_for_statement :: proc() ƒ^ˆ× 
+	                                         ^ 
