@@ -13,6 +13,12 @@ NOTEBOOKS_PATH:: "examples"
 
 
 test_notebook:: proc(t: ^testing.T, notebook_name: string) {
+	session: ^Session = new(Session)
+	start_session(session)
+	log.info("Started session.")
+	// DICK
+	defer end_session(session)
+
 	filepath: = slashpath.join({NOTEBOOKS_PATH, notebook_name})
 	log.info("Filepath:", filepath)
 	// arena: mem.Arena
@@ -25,8 +31,10 @@ test_notebook:: proc(t: ^testing.T, notebook_name: string) {
 	notebook: = ipynb.make_notebook()
 	ok = ipynb.parse_notebook(&parser, &notebook)
 	testing.expectf(t, ok, "Could not parse notebook %s.", filepath)
-	for cell in notebook.cells {
-		log.info(len(cell.source))
+	for notebook_cell, i in notebook.cells {
+		cell, err: = compile_new_cell(session, "", notebook_cell.source, cast(uint)i)
+		testing.expectf(t, err == NOERR, "Cell %d failed with error: %v.", i, err)
+		// log.info(err)
 		// execute cell and assert that it completed //
 	}
 	free_all(context.allocator)

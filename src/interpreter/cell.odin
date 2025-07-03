@@ -245,7 +245,8 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	if status == -1 do return error_handler(General_Error.Spawn_Error, "Could not execture odin build command.")
 	if ! os.exists(cell.dll_filepath) {
 		build_log, err: = os.read_entire_file_from_filename(build_log_filepath)
-		print_cell_code(cell)
+		// TEMP
+		// print_cell_code(cell)
 		return error_handler(General_Error.Compiler_Error, string(build_log)) }
 	os.remove(build_log_filepath)
 

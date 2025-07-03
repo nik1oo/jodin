@@ -201,8 +201,8 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		else do fmt.sbprintln(&file_tags, tag.text) }
 
 	// PARSE DECLARATIONS //
-	for decl_node, _ in pp.file.decls {
-		fmt.printfln("%s%T:%s %s", ANSI_BOLD_BLUE, reflect.get_union_variant(decl_node.derived_stmt), ANSI_RESET, preprocess_node(&pp, decl_node)) }
+	// for decl_node, _ in pp.file.decls {
+	// 	fmt.printfln("%s%T:%s %s", ANSI_BOLD_BLUE, reflect.get_union_variant(decl_node.derived_stmt), ANSI_RESET, preprocess_node(&pp, decl_node)) }
 	DECLS: for decl_node, _ in pp.file.decls do #partial switch decl in decl_node.derived_stmt {
 		case ^ast.Value_Decl:
 			PREPROCESS_VALUE_DECL: {
