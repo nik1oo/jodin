@@ -106,6 +106,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		return slice.contains(pp.sync_scopes[:], scope) }
 
 	context = cell.cell_context
+	session: = cell.session
 
 	pp: Preprocessor = {
 		cell = cell,
@@ -140,7 +141,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	prsr:= parser.default_parser()
 	prsr.err, prsr.warn = stub_error_handler, stub_error_handler
 	ok: = parser.parse_file(&prsr, pp.file)
-	if ! ok do return error_handler(General_Error.Preprocessor_Error, "Could not parse file %s.", pp.file.src)
+	if ! ok do return session.error_handler(General_Error.Preprocessor_Error, "Could not parse file %s.", pp.file.src)
 
 	// COLLECT SYNC SCOPES //
 	v: = &ast.Visitor {
@@ -180,7 +181,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 					if is_externally_declared && (! is_shadowing) && (! is_value_decl) {
 						append(&pp.external_variable_nodes, node) } }
 						// if EVI_expr_is_valid(pp, node) do append(&pp.external_variable_nodes, node)
-						// else do pp.err = error_handler(General_Error.Preprocessor_Error, "References to external variables in `#+async` cells are only allowed inside scopes labeled by `sync:`.") } }
+						// else do pp.err = session.error_handler(General_Error.Preprocessor_Error, "References to external variables in `#+async` cells are only allowed inside scopes labeled by `sync:`.") } }
 			return v },
 		data = &pp }
 	ast.walk(v, &pp.file.node)
@@ -225,7 +226,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
       							break PREPROCESS_VALUE_DECL
 						case:
-							return error_handler(General_Error.Preprocessor_Error, "Unhandled immutable value declaration %s of type $v.", preprocess_node(&pp, decl.values[0]), value) }
+							return session.error_handler(General_Error.Preprocessor_Error, "Unhandled immutable value declaration %s of type $v.", preprocess_node(&pp, decl.values[0]), value) }
 					fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))       }
 
 				// MUTABLE //
@@ -235,17 +236,17 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 					name_string: = (name.derived_expr.(^ast.Ident)).name
 					if i < len(decl.values) do #partial switch value in decl.values[i].derived_expr {
 						case ^ast.Basic_Lit:
-							if inferred_type do if ! infer_basic_lit_type(value, &type_string) do return error_handler(General_Error.Preprocessor_Error, correct_raw_code_pos(decl.pos), "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string)
+							if inferred_type do if ! infer_basic_lit_type(value, &type_string) do return session.error_handler(General_Error.Preprocessor_Error, "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string, correct_raw_code_pos(decl.pos))
 							if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = preprocess_node(&pp, decl.values[i]) })
 							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node))
 						case ^ast.Comp_Lit, ^ast.Ident, ^ast.Call_Expr, ^ast.Binary_Expr, ^ast.Unary_Expr, ^ast.Paren_Expr, ^ast.Deref_Expr, ^ast.Auto_Cast:
-							if inferred_type do return error_handler(General_Error.Preprocessor_Error, correct_raw_code_pos(decl.pos), "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string)
+							if inferred_type do return session.error_handler(General_Error.Preprocessor_Error, "JOdin cannot infer the type of %s. Please declare it explicitly.", name_string, correct_raw_code_pos(decl.pos))
 							else if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = preprocess_node(&pp, decl.values[i]) })
 							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``)
 						case ^ast.Struct_Type, ^ast.Proc_Lit:
 							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
       						case:
-							return error_handler(General_Error.Preprocessor_Error, "Unhandled mutable value declaration %s of type %v.", preprocess_node(&pp, decl.values[i]), value) }
+							return session.error_handler(General_Error.Preprocessor_Error, "Unhandled mutable value declaration %s of type %v.", preprocess_node(&pp, decl.values[i]), value) }
 					else {
 						if ! cell.tags.async do append(&cell.global_variables, Variable{ name = name_string, type = type_string, value = "" })
 							else do fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``) } } }
@@ -289,7 +290,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		case ^ast.Switch_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", preprocess_node(&pp, decl)}))
 		case:
-			return error_handler(General_Error.Preprocessor_Error, "Undandled declaration %s of type %T.", preprocess_node(&pp, decl_node), decl_node.derived_stmt) }
+			return session.error_handler(General_Error.Preprocessor_Error, "Undandled declaration %s of type %T.", preprocess_node(&pp, decl_node), decl_node.derived_stmt) }
 
 	nl:: proc(sb: ^strings.Builder) { fmt.sbprintln(sb) }
 

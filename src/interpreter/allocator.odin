@@ -6,13 +6,15 @@ import "core:slice"
 
 
 Allocator:: struct {
+	session: ^Session,
 	backing: runtime.Allocator,
 	total_memory_allocated: i64,
 	disable_free: bool,
 	print_allocations: bool }
 
 
-allocator_init:: proc(a: ^Allocator, disable_free: bool = false, print_allocations: bool = false, backing_allocator: runtime.Allocator = context.allocator) {
+allocator_init:: proc(a: ^Allocator, session: ^Session, disable_free: bool = false, print_allocations: bool = false, backing_allocator: runtime.Allocator = context.allocator) {
+	a.session = session
 	a.backing = backing_allocator
 	a.disable_free = disable_free
 	a.print_allocations = print_allocations }
@@ -37,7 +39,7 @@ allocator_proc:: proc(
 	allocator := cast(^Allocator)allocator_data
 	switch mode {
 	case .Alloc, .Alloc_Non_Zeroed:
-		if allocator.print_allocations do error_handler(nil, "Allocated %d bytes.", size, loc=loc)
+		if allocator.print_allocations do allocator.session.error_handler(nil, "Allocated %d bytes.", size, loc=loc)
 		allocator.total_memory_allocated += cast(i64)size
 		return mem.alloc_bytes(size, alignment, allocator.backing, loc)
 	case .Free:

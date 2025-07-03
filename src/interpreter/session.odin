@@ -33,6 +33,9 @@ Procedure:: struct { name: string, type: string, value: string }
 
 // INTERPRETER SESSION //
 Session:: struct {
+	// ERROR HANDLING PROC //
+	error_handler: proc(err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error,
+
 	// MUTEX //
 	data_mutex:                     sync.Ticket_Mutex,
 
@@ -62,13 +65,14 @@ Session:: struct {
 	__symmap__:                     map[string]rawptr }
 
 
-start_session:: proc(session: ^Session) -> (err: Error) {
+start_session:: proc(session: ^Session, error_handler: proc(err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error) -> (err: Error) {
 	session.name = fmt.aprintf("session_%s", time_string())
 	session.os_stdout, session.os_stderr = os.stdout, os.stderr
+	session.error_handler = error_handler
 	err = internal_pipe.init(&session.stdout_pipe, CELL_STDOUT_PIPE_BUFFER_SIZE)
-	if err != NOERR do return error_handler(err, "Could not create stdout pipe.")
+	if err != NOERR do return session.error_handler(err, "Could not create stdout pipe.")
 	err = internal_pipe.init(&session.stderr_pipe, CELL_STDERR_PIPE_BUFFER_SIZE)
-	if err != NOERR do return error_handler(err, "Could not create stderr pipe.")
+	if err != NOERR do return session.error_handler(err, "Could not create stderr pipe.")
 	context.logger = log.create_console_logger()
 	session.cells = make(map[string]^Cell)
 	session.__symmap__ = make(map[string]rawptr)
@@ -77,7 +81,7 @@ start_session:: proc(session: ^Session) -> (err: Error) {
 	session.session_temp_directory = filepath.join({temp_directory, session.name})
 	if ! os.exists(session.session_temp_directory) {
 		err = os.Error(os.make_directory(session.session_temp_directory, os.O_RDWR))
-		if err != os.Error(os.General_Error.None) do return error_handler(err, "Couldn't create temp folder %s.", session.session_temp_directory) }
+		if err != os.Error(os.General_Error.None) do return session.error_handler(err, "Couldn't create temp folder %s.", session.session_temp_directory) }
 	session_output_to_console(session)
 	return NOERR }
 

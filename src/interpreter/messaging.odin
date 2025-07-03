@@ -217,9 +217,9 @@ Debug_Event_Message_Header:: struct #packed {
 
 
 @(private) send_message:: proc(message: Message) -> Error {
-	if __cell__ == nil do return error_handler(General_Error.Invalid_State, "__cell__ is nil.")
-	if len(message) == 0 do return error_handler(General_Error.Data_Empty, "Message is nil.")
+	if __cell__ == nil do return General_Error.Invalid_State
+	if len(message) == 0 do return General_Error.Data_Empty
 	_, err: = os.write(auto_cast __cell__.iopub_pipe.input_handle, message)
-	if err != os.General_Error.None do return error_handler(os.Error(err), "Failed to write message to IOPUB pipe.")
+	if err != os.General_Error.None do return os.Error(err)
 	return NOERR }
 

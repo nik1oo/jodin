@@ -77,7 +77,7 @@ clear_directory:: proc(path: string) -> (err: Error) {
 	fi, err = os.read_dir(handle, 100)
 	for f in fi do clear_directory(f.fullpath)
 	err = os.remove_directory(path)
-	if err != NOERR do return error_handler(err, "Could not delete %s", path)
+	if err != NOERR do return err
 	return NOERR }
 
 

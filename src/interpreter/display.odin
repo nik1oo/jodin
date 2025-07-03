@@ -18,8 +18,8 @@ Audio_Format:: enum u8 { AAC, MP3, WAV, WEBM }
 
 
 display_audio:: proc(data: []u8, format: Audio_Format, element_id: string = "", loc: = #caller_location) -> (err: Error) {
-	if data == nil do return error_handler(General_Error.Data_Empty, "Data is nil.")
-	if format > .WEBM do return error_handler(General_Error.Invalid_Format, "Invalid audio format.")
+	if data == nil do return General_Error.Data_Empty
+	if format > .WEBM do return General_Error.Invalid_Format
 	return display_data(data, AUDIO_MIME_TYPES[format], 0, 0, display_id = element_id) }
 
 
@@ -33,9 +33,9 @@ Image_Format:: enum u8 { PNG, JPEG, GIF, WEBP }
 
 display_image:: proc{ display_image_from_data_and_format_and_size, display_image_from_data_and_format, display_image_from_filepath, display_image_from_filepath_and_size }
 display_image_from_data_and_format_and_size:: proc(data: []u8, format: Image_Format, size: [2]uint, display_id: string = "", loc: = #caller_location) -> (err: Error) {
-	if data == nil do return error_handler(General_Error.Data_Empty, "Data is nil.")
-	if format > .WEBP do return error_handler(General_Error.Invalid_Format, "Invalid image format.")
-	if size.x == 0 || size.y == 0 do return error_handler(General_Error.Invalid_Argument, "Invalid image dimensions")
+	if data == nil do return General_Error.Data_Empty
+	if format > .WEBP do return General_Error.Invalid_Format
+	if size.x == 0 || size.y == 0 do return General_Error.Invalid_Argument
 	return display_data(data, IMAGE_MIME_TYPES[format], auto_cast size.x, auto_cast size.y, display_id = display_id) }
 
 

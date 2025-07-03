@@ -1,0 +1,3 @@
+C:/Program Files/Odin/shared/jodin/test_notebooks.odin(17:2) Error: Parameter 'error_handler' of type 'proc(Error, string, ..any, Source_Code_Location) -> Error' is missing in procedure call 
+	start_session(session) 
+	^~~~~~~~~~~~~~~~~~~~~^ 

@@ -108,24 +108,26 @@ init_cell:: proc(cell: ^Cell, session: ^Session, frontend_cell_id: string, code_
 
 	// DIRECTORIES //
 	err = os.make_directory(cell.package_filepath)
-	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not make directory %s.", cell.package_filepath)
+	if err != os.Error(os.General_Error.None) do return session.error_handler(err, "Could not make directory %s.", cell.package_filepath)
 
 	// PIPES FROM THE DLL TO THE INTERPRETER //
 	err = internal_pipe.init(&cell.stdout_pipe, KERNEL_STDOUT_PIPE_BUFFER_SIZE)
-	if err != NOERR do return error_handler(err, "Could not create stdout pipe.")
+	if err != NOERR do return session.error_handler(err, "Could not create stdout pipe.")
 	err = internal_pipe.init(&cell.stderr_pipe, KERNEL_STDERR_PIPE_BUFFER_SIZE)
-	if err != NOERR do return error_handler(err, "Could not create stderr pipe.")
+	if err != NOERR do return session.error_handler(err, "Could not create stderr pipe.")
 	err = internal_pipe.init(&cell.iopub_pipe, KERNEL_IOPUB_PIPE_BUFFER_SIZE)
-	if err != NOERR do return error_handler(err, "Could not create iopub pipe.")
+	if err != NOERR do return session.error_handler(err, "Could not create iopub pipe.")
 	return restart_cell(cell, code_raw) }
 
 
 restart_cell:: proc(cell: ^Cell, code_raw: string) -> (err: Error) {
+	session: = cell.session
+
 	// CODE //
 	cell.code_raw = code_raw
 	cell.code = ""
 	err = os.write_entire_file_or_err(cell.source_filepath, transmute([]u8)cell.code_raw)
-	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not write to %s.", cell.source_filepath)
+	if err != os.Error(os.General_Error.None) do return session.error_handler(err, "Could not write to %s.", cell.source_filepath)
 
 	// PREPROCESSING INFORMATION //
 	cell.tags = { odin_path = "odin", build_args = "", timeout = DEFAULT_CELL_TIMEOUT }
@@ -204,16 +206,17 @@ run_cell_single_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stder
 
 
 run_cell_multi_threaded:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_iopub: string, err: Error) {
+	session: = cell.session
 	// TODO Pass `cell.cell_context` to `init_context` argument, instead of setting it manually in the thread's `__init__` proc. //
 	cell_thread: = thread.create_and_start_with_poly_data(cell, cell_thread_proc, init_context = context, priority = .Normal, self_cleanup = false)
-	if cell_thread == nil do return "", "", "", error_handler(General_Error.Spawn_Error, "Failed to spawn cell thread.")
+	if cell_thread == nil do return "", "", "", session.error_handler(General_Error.Spawn_Error, "Failed to spawn cell thread.")
 	if ! cell.tags.async {
 		timer: time.Stopwatch
 		time.stopwatch_start(&timer)
 		for ! thread.is_done(cell_thread) {
 			if int(time.duration_seconds(time.stopwatch_duration(timer))) >= cell.tags.timeout {
 				thread.terminate(cell_thread, 0)
-				error_handler(os.Error(os.General_Error.Timeout), "Cell timed out.")
+				session.error_handler(os.Error(os.General_Error.Timeout), "Cell timed out.")
 				break } }
 		cell_stdout, _ = internal_pipe.read(&cell.stdout_pipe)
 		cell_stderr, _ = internal_pipe.read(&cell.stderr_pipe)
@@ -232,44 +235,45 @@ run_cell:: proc(cell: ^Cell) -> (cell_stdout: string, cell_stderr: string, cell_
 
 compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	context = cell.cell_context
+	session: = cell.session
 
 	// WRITE DLL //
 	if os.exists(cell.source_filepath) do os.remove(cell.source_filepath)
 	err = os.write_entire_file_or_err(cell.source_filepath, transmute([]u8)cell.code)
-	if err != os.Error(os.General_Error.None) do return error_handler(err, "Could not write DLL to %s.", cell.source_filepath)
+	if err != os.Error(os.General_Error.None) do return session.error_handler(err, "Could not write DLL to %s.", cell.source_filepath)
 
 	// COMPILE DLL //
 	build_log_filepath: = filepath.join({ cell.session.session_temp_directory, "build_log.txt" })
 	build_command: = fmt.caprintf(`%s build %s %s -file -build-mode:dll -out:%s -linker:lld > "%s" 2>&1`, cell.tags.odin_path, cell.source_filepath, cell.tags.build_args, cell.dll_filepath, build_log_filepath)
 	status: = libc.system(build_command)
-	if status == -1 do return error_handler(General_Error.Spawn_Error, "Could not execture odin build command.")
+	if status == -1 do return session.error_handler(General_Error.Spawn_Error, "Could not execture odin build command.")
 	if ! os.exists(cell.dll_filepath) {
 		build_log, err: = os.read_entire_file_from_filename(build_log_filepath)
 		// TEMP
 		// print_cell_code(cell)
-		return error_handler(General_Error.Compiler_Error, string(build_log)) }
+		return session.error_handler(General_Error.Compiler_Error, string(build_log)) }
 	os.remove(build_log_filepath)
 
 	// LOAD DLL //
-	if ! os.exists(cell.dll_filepath) do return error_handler(os.Error(os.General_Error.Not_Exist), "Could not find DLL.")
+	if ! os.exists(cell.dll_filepath) do return session.error_handler(os.Error(os.General_Error.Not_Exist), "Could not find DLL.")
 	cell.library, cell.loaded = dynlib.load_library(cell.dll_filepath, global_symbols = true)
-	if ! cell.loaded do return error_handler(General_Error.DLL_Error, "Could not load DLL. %s", dynlib.last_error())
+	if ! cell.loaded do return session.error_handler(General_Error.DLL_Error, "Could not load DLL. %s", dynlib.last_error())
 	ptr: rawptr; found: bool
 	ptr, found = dynlib.symbol_address(cell.library, "__init__")
-	if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol __init__.")
+	if ! found do return session.error_handler(General_Error.DLL_Error, "Could not find symbol __init__.")
 	cell.__init__ = auto_cast ptr
 	ptr, found = dynlib.symbol_address(cell.library, "__main__")
-	if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol __main__.")
+	if ! found do return session.error_handler(General_Error.DLL_Error, "Could not find symbol __main__.")
 	cell.__main__ = auto_cast ptr
 	ptr, found = dynlib.symbol_address(cell.library, "__update_symmap__")
-	if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol __update_symmap__.")
+	if ! found do return session.error_handler(General_Error.DLL_Error, "Could not find symbol __update_symmap__.")
 	cell.__update_symmap__ = auto_cast ptr
 	ptr, found = dynlib.symbol_address(cell.library, "__apply_symmap__")
-	if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol __apply_symmap__.")
+	if ! found do return session.error_handler(General_Error.DLL_Error, "Could not find symbol __apply_symmap__.")
 	cell.__apply_symmap__ = auto_cast ptr
 	for procedure in cell.global_procedures {
 		ptr, found = dynlib.symbol_address(cell.library, procedure.name)
-		if ! found do return error_handler(General_Error.DLL_Error, "Could not find symbol %s.", procedure.name)
+		if ! found do return session.error_handler(General_Error.DLL_Error, "Could not find symbol %s.", procedure.name)
 		cell.session.__symmap__[procedure.name] = auto_cast ptr }
 
 	return NOERR }

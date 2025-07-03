@@ -51,14 +51,14 @@ CELL_ARENA_SIZE::                32 * mem.Megabyte
 main:: proc() {
 	fmt.println(ANSI_GREEN, "[JodinInterpreter]", ANSI_RESET, " jodin: ", "Version: ", VERSION, sep = "")
 	alo: Allocator
-	allocator_init(&alo, disable_free=true, print_allocations=true, backing_allocator=context.allocator)
+	session: ^Session = new(Session)
+	allocator_init(&alo, session, disable_free=true, print_allocations=true, backing_allocator=context.allocator)
 	// TEMP
 	// context.allocator = allocator(&alo)
-	session: ^Session = new(Session)
-	start_session(session)
+	start_session(session, error_handler)
 	defer end_session(session)
 	err: = connect_to_ipy_kernel(session)
-	if err != NOERR { error_handler(err, "Could not connect to jodin kernel."); return }
+	if err != NOERR { session.error_handler(err, "Could not connect to jodin kernel."); return }
 	counter: uint = 1
 	for {
 		defer { counter += 1 }
