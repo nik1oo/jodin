@@ -127,9 +127,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 
 	// ASSEMBLE PREPROCESSOR INPUT //
 	src: = insert_package_decl(cell.code_raw, cell.name)
-	// fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
-	// fmt.eprintln(src)
-	// fmt.eprintln("-----------------------------------------------------", ANSI_RESET)
+	// print_cell_content(cell)
 
 	// INITIALIZE PREPROCESSOR //
 	NO_POS:: tokenizer.Pos{}
@@ -170,15 +168,16 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		return false }
 	// Keep track of depth. //
 	// When declaration of variable met, add to blacklist and do not collect until we go up in scope. //
+	Shadowed:: struct{ pos: int, depth: int }
 	Visitor_Data:: struct {
 		pp:          ^Preprocessor,
 		scope_depth: int,
-		shadowed:    map[string]int,
+		shadowed:    map[string]Shadowed,
 		scope_stack: queue.Queue([2]int) }
 	visitor_data: Visitor_Data = {
 		pp          = &pp,
 		scope_depth = 0,
-		shadowed    = make(map[string]int), // name of shadowed variable -> position of shadowing declaration
+		shadowed    = make(map[string]Shadowed), // name of shadowed variable -> position of shadowing declaration
 		scope_stack = {} }
 	queue.init(&visitor_data.scope_stack)
 	queue.push_back(&visitor_data.scope_stack, [2]int{ 0, len(pp.file.src) })
@@ -190,9 +189,10 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 			curr_scope: = [2]int{queue.peek_back(&visitor_data.scope_stack).x, queue.peek_back(&visitor_data.scope_stack).y }
 			// fmt.eprintfln("%s: %d -> %d, %d", node_to_string(visitor_data.pp, node^), pos, curr_scope.x, curr_scope.y)
 			for name, shadowing_pos in visitor_data.shadowed {
+				if shadowing_pos.depth < visitor_data.scope_depth do continue
 				// fmt.eprintln("checking %s %d", name, shadowing_pos)
 				if queue.len(visitor_data.scope_stack) > 0 do if ! in_range(pos, curr_scope.x, curr_scope.y) {
-					// fmt.eprintln("shadowed variable %s has left shadowing scope.", name)
+					// fmt.eprintfln("Shadowed variable %s has left shadowing scope %d, %d.", name, curr_scope.x, curr_scope.y)
 					delete_key(&visitor_data.shadowed, name) } }
 			if queue.len(visitor_data.scope_stack) > 0 do if ! in_range(pos, queue.peek_back(&visitor_data.scope_stack).x, queue.peek_back(&visitor_data.scope_stack).y) {
 				// fmt.eprintfln("%d out of range of %d,%d. Exiting scope at:\n %s", pos, queue.peek_back(&visitor_data.scope_stack).x, queue.peek_back(&visitor_data.scope_stack).y, node_to_string(visitor_data.pp, node^))
@@ -200,9 +200,12 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 				queue.pop_back(&visitor_data.scope_stack) }
 			#partial switch ident in node.derived {
 		 		case ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.Range_Stmt, ^ast.Unroll_Range_Stmt, ^ast.Switch_Stmt, ^ast.For_Stmt:
-					// fmt.eprintln("Entering scope of:", node_to_string(visitor_data.pp, node^))
+					scope: = [2]int{ node.pos.offset, node.end.offset }
+					if_stmt, ok: = ident.(^ast.If_Stmt)
+					if ok do if if_stmt.else_stmt != nil do scope.y = if_stmt.else_stmt.end.offset
+					// fmt.eprintfln("Entering scope %d, %d: <%s>", scope.x, scope.y, node_to_string(visitor_data.pp, node^))
 					visitor_data.scope_depth += 1
-					queue.push_back(&visitor_data.scope_stack, [2]int{ node.pos.offset, node.end.offset })
+					queue.push_back(&visitor_data.scope_stack, scope)
 				case ^ast.Value_Decl:
 					for name_expr, i in ident.names {
 						is_externally_declared: bool = false
@@ -211,7 +214,9 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 							if variable.name == name {
 								is_externally_declared = true
 								break SEARCH1 } }
-						visitor_data.shadowed[name] = pos }
+						if is_externally_declared {
+							// fmt.eprintfln("Shadowing variable %s at pos %d.", name, pos)
+							visitor_data.shadowed[name] = { pos, visitor_data.scope_depth } } }
 				case ^ast.Ident:
 					is_externally_declared: bool = false
 					SEARCH2: for _, other_cell in visitor_data.pp.cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables do if variable.name == ident.name {

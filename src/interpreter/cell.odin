@@ -250,7 +250,8 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	if ! os.exists(cell.dll_filepath) {
 		build_log, err: = os.read_entire_file_from_filename(build_log_filepath)
 		// TEMP
-		print_cell_code(cell)
+		// print_cell_content(cell)
+		// print_cell_code(cell)
 		return session.error_handler(General_Error.Compiler_Error, string(build_log)) }
 	os.remove(build_log_filepath)
 
@@ -299,6 +300,12 @@ recompile_cell:: proc(session: ^Session, frontend_cell_id, code_raw: string) -> 
 	// determine_dependers(cell)
 	// recompile_dependers(cell)
 	return cell, NOERR }
+
+
+print_cell_content:: proc(cell: ^Cell) {
+	fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
+	fmt.eprintln(cell.code_raw)
+	fmt.eprintln("-----------------------------------------------------", ANSI_RESET) }
 
 
 print_cell_code:: proc(cell: ^Cell) {
