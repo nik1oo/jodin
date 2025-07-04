@@ -8,3 +8,4 @@ src/interpreter/interpreter.pdb
 src/interpreter/session.rdbg
 src/interpreter/.buffer.odin
 src/ipy_kernel/src/jodin/.buffer.py
+examples/temp

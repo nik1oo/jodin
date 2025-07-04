@@ -106,3 +106,8 @@ string_is_corrupt:: proc(str: string) -> bool {
 string_builder_is_corrupt:: proc(sb: strings.Builder) -> bool {
 	return string_is_corrupt(strings.to_string(sb)) }
 
+
+indent:: proc(str: string) -> string {
+	result, _: = strings.replace(str, "\n", "\n\t", 100)
+	return result }
+
