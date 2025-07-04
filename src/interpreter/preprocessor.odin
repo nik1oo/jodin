@@ -106,6 +106,12 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	node_is_synced:: proc(pp: ^Preprocessor, node: ^ast.Node) -> bool {
 		scope: = [2]int{ node.pos.offset, node.end.offset }
 		return slice.contains(pp.sync_scopes[:], scope) }
+	value_decl_is_proc:: proc(decl: ^ast.Value_Decl) -> bool {
+		if decl.is_mutable do return false
+		if len(decl.values) != 1 do return false
+		proc_lit, ok: = decl.values[0].derived_expr.(^ast.Proc_Lit)
+		return ok }
+
 
 	context = cell.cell_context
 	session: = cell.session
@@ -185,6 +191,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		visit = proc(v: ^ast.Visitor, node: ^ast.Node) -> ^ast.Visitor {
 			if node == nil do return nil
 			visitor_data: ^Visitor_Data = cast(^Visitor_Data)v.data
+			// fmt.eprintfln("Visiting node <%s> of type<%T>", node_to_string(visitor_data.pp, node^), reflect.get_union_variant(node.derived))
 			pos: = node.pos.offset
 			curr_scope: = [2]int{queue.peek_back(&visitor_data.scope_stack).x, queue.peek_back(&visitor_data.scope_stack).y }
 			// fmt.eprintfln("%s: %d -> %d, %d", node_to_string(visitor_data.pp, node^), pos, curr_scope.x, curr_scope.y)
@@ -199,6 +206,35 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 				visitor_data.scope_depth -= 1
 				queue.pop_back(&visitor_data.scope_stack) }
 			#partial switch ident in node.derived {
+				case ^ast.Value_Decl:
+					if ! value_decl_is_proc(ident) {
+						for name_expr, i in ident.names {
+							is_externally_declared: bool = false
+							name: = node_to_string(visitor_data.pp, name_expr)
+							SEARCH1: for _, other_cell in visitor_data.pp.cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables {
+								if variable.name == name {
+									is_externally_declared = true
+									break SEARCH1 } }
+							if is_externally_declared {
+								// fmt.eprintfln("Shadowing variable %s at pos %d.", name, pos)
+								visitor_data.shadowed[name] = { pos, visitor_data.scope_depth } } } }
+					else {
+						// fmt.eprintln("ENTERING PROC SCOPE <%s>.", node_to_string(visitor_data.pp, node^))
+						scope: = [2]int{ node.pos.offset, node.end.offset }
+						visitor_data.scope_depth += 1
+						queue.push_back(&visitor_data.scope_stack, scope)
+					}
+				case ^ast.Field:
+					for name_expr, i in ident.names {
+						is_externally_declared: bool = false
+						name: = node_to_string(visitor_data.pp, name_expr)
+						SEARCH3: for _, other_cell in visitor_data.pp.cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables {
+							if variable.name == name {
+								is_externally_declared = true
+								break SEARCH3 } }
+						if is_externally_declared {
+							// fmt.eprintfln("Shadowing variable %s at pos %d.", name, pos)
+							visitor_data.shadowed[name] = { pos, visitor_data.scope_depth } } }
 		 		case ^ast.Block_Stmt, ^ast.If_Stmt, ^ast.Range_Stmt, ^ast.Unroll_Range_Stmt, ^ast.Switch_Stmt, ^ast.For_Stmt:
 					scope: = [2]int{ node.pos.offset, node.end.offset }
 					if_stmt, ok: = ident.(^ast.If_Stmt)
@@ -206,17 +242,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 					// fmt.eprintfln("Entering scope %d, %d: <%s>", scope.x, scope.y, node_to_string(visitor_data.pp, node^))
 					visitor_data.scope_depth += 1
 					queue.push_back(&visitor_data.scope_stack, scope)
-				case ^ast.Value_Decl:
-					for name_expr, i in ident.names {
-						is_externally_declared: bool = false
-						name: = node_to_string(visitor_data.pp, name_expr)
-						SEARCH1: for _, other_cell in visitor_data.pp.cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables {
-							if variable.name == name {
-								is_externally_declared = true
-								break SEARCH1 } }
-						if is_externally_declared {
-							// fmt.eprintfln("Shadowing variable %s at pos %d.", name, pos)
-							visitor_data.shadowed[name] = { pos, visitor_data.scope_depth } } }
 				case ^ast.Ident:
 					is_externally_declared: bool = false
 					SEARCH2: for _, other_cell in visitor_data.pp.cell.session.cells do if other_cell.loaded do for variable in other_cell.global_variables do if variable.name == ident.name {
@@ -257,6 +282,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 
 				// IMMUTABLE //
 				if ! decl.is_mutable {
+					// TODO Use `value_decl_is_proc`.
 					if len(decl.values) == 1 do #partial switch value in decl.values[0].derived_expr {
 						case ^ast.Proc_Lit:
 							append(&cell.global_procedures, Procedure{
