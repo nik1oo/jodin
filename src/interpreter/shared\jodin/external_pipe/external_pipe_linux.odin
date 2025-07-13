@@ -4,9 +4,6 @@ import "core:os"
 import "core:sys/linux"
 
 
-// I am starting to work on this. //
-
-
 pipe_path_is_valid:: proc(path: string) -> bool {
 	return true }
 
