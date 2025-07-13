@@ -2,13 +2,15 @@
 <html>
 {{- partial "head.html" . -}}
 
+
 <body>
+    <div id="demo-container">
+        <img src="demo.gif" alt="Jodin logo" class="demo-video">
+        <img src="demo.gif" alt="Jodin logo" class="demo-video">
+        <img src="demo.gif" alt="Jodin logo" class="demo-video">
+        <img src="demo.gif" alt="Jodin logo" class="demo-video">
+    </div>
     <div id="landing">
-<!--        <div id="landing-canva">
-        </div>-->
-        <div>
-        <video src="demo.mp4" type="video/mp4" autoplay loop id="demo-video">
-        </div>
         <div id="landing-content">
             {{- partial "header.html" . -}}
             <section id="posts-container">
@@ -18,21 +20,16 @@
                     </li>
                     {{ range .Site.RegularPages.ByPublishDate }}
                     <li class="post">
-                        <a href="{{ .Permalink }}">
+                        <a href="{{ .Permalink }}" class="button">
                             {{ .Title }}
-                            <br />
-                            <time>{{ .Date.Format (.Site.Params.dateform | default "2006-01-02") }}</time>
                         </a>
                     </li>
                     {{ end }}
                 </ul>
             </section>
-            {{- partial "footer.html" . -}}
         </div>
         <div id="landing-canva-2"></div>
     </div>
-    <script src="{{ relURL `p5/p5.min.js` }}"></script>
-    <script src="{{ relURL `js/genart.js` }}"></script>
 </body>
 
 </html>

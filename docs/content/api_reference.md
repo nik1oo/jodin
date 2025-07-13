@@ -1,7 +1,7 @@
 +++
 date = '2025-07-02T15:13:58+03:00'
 draft = false
-title = 'API Reference'
+title = 'Reference'
 +++
 
 The Jodin package should be located in **Odin/shared/jodin**, which is implicitly imported in every cell. Everything here is under namespace **jodin**.
