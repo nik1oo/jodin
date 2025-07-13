@@ -1,6 +1,0 @@
-C:/Code/jodin/temp/session_21_15_36/cell_21_15_58_129/cell_21_15_58_129.odin(109:45) Syntax Error: Failed to parse file: C:/Code/jodin/temp/session_21_15_36/cell_21_15_58_129/cell_21_15_58_129; invalid token found in file 
-	@(export) unroll_for_statement :: proc() ,:pê 
-	                                        ^ 
-C:/Code/jodin/temp/session_21_15_36/cell_21_15_58_129/cell_21_15_58_129.odin(109:46) Syntax Error: Illegal character:  (3) 
-	@(export) unroll_for_statement :: proc() ,:pê 
-	                                          ^ 

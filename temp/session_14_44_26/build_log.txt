@@ -1,8 +1,0 @@
-C:/Code/jodin/temp/session_14_44_26/cell_14_44_42_64/cell_14_44_42_64.odin(158:5) Syntax Error: Failed to parse file: C:/Code/jodin/temp/session_14_44_26/cell_14_44_42_64/cell_14_44_42_64; invalid token found in file 
-	( empty line ) 
-C:/Code/jodin/temp/session_14_44_26/cell_14_44_42_64/cell_14_44_42_64.odin(158:4) Syntax Error: Illegal character NUL 
-	( empty line ) 
-C:/Code/jodin/temp/session_14_44_26/cell_14_44_42_64/cell_14_44_42_64.odin(158:5) Syntax Error: Illegal character NUL 
-	( empty line ) 
-C:/Code/jodin/temp/session_14_44_26/cell_14_44_42_64/cell_14_44_42_64.odin(158:6) Syntax Error: Illegal character:  (0) 
-	( empty line ) 

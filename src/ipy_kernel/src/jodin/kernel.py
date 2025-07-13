@@ -97,7 +97,11 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
         redirected_stdout = sys.stdout
         sys.stdout = sys.__stdout__
         temp_directory = os.getcwd() + r"\temp"
-        if os.path.exists(temp_directory): shutil.rmtree(temp_directory)
+        if os.path.exists(temp_directory):
+            try:
+                shutil.rmtree(temp_directory)
+            except:
+                pass
         self.interpreter_path = 'jodin.exe'
         subprocess.Popen(self.interpreter_path)
         print_and_flush(ANSI_GREEN + "[JodinKernel]" + ANSI_RESET + " Started jodin interpreter.")

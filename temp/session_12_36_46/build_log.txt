@@ -1,6 +1,0 @@
-C:/Code/jodin/temp/session_12_36_46/cell_12_37_06_159/cell_12_37_06_159.odin(19:2) Error: Undeclared name: fmt 
-	fmt.println("\n# bit_field type") 
-	^~^ 
-C:/Code/jodin/temp/session_12_36_46/cell_12_37_06_159/cell_12_37_06_159.odin(34:3) Error: Undeclared name: fmt 
-	fmt.println(v.x) // accessing will convert `v.x` to an  ... 
-	^~^ 

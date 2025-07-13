@@ -1,6 +1,0 @@
-C:/Code/jodin/temp/session_14_31_19/cell_14_31_26_159/cell_14_31_26_159.odin(88:1) Syntax Error: Expected a statement, got '<' 
-	<>< 
-	^ 
-C:/Code/jodin/temp/session_14_31_19/cell_14_31_26_159/cell_14_31_26_159.odin(93:1) Syntax Error: Expected a statement, got '>' 
-	> 
-	^ 

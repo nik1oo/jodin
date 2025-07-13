@@ -112,7 +112,6 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		proc_lit, ok: = decl.values[0].derived_expr.(^ast.Proc_Lit)
 		return ok }
 
-
 	context = cell.cell_context
 	session: = cell.session
 
@@ -296,6 +295,9 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 						case ^ast.Binary_Expr:
 							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
       							break PREPROCESS_VALUE_DECL
+      					case ^ast.Struct_Type:
+							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
+      							break PREPROCESS_VALUE_DECL
 						case:
 							return session.error_handler(General_Error.Preprocessor_Error, "Unhandled immutable value declaration %s of type $v.", preprocess_node(&pp, decl.values[0]), value) }
 					fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))       }
@@ -325,7 +327,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 							else {
 								fmt.sbprintln(&main_stmts, `			`, preprocess_node(&pp, decl_node), sep=``) } } } }
 		case ^ast.Import_Decl:
-			fmt.sbprintln(&import_stmts, `		`, preprocess_node(&pp, decl_node), sep=``)
+			fmt.sbprintln(&import_stmts, preprocess_node(&pp, decl_node), sep=``)
   		case ^ast.Assign_Stmt, ^ast.Expr_Stmt, ^ast.When_Stmt, ^ast.Defer_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', preprocess_node(&pp, decl_node))
 		case ^ast.For_Stmt:
@@ -378,7 +380,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		`import "core:io"` + NL +
 		`import "core:os"` + NL +
 		`import "core:sync"` + NL)
-	for _, other_cell in cell.session.cells do if other_cell.loaded do fmt.sbprintln(&sb, other_cell.imports_string)
+	for _, other_cell in cell.session.cells do if other_cell.loaded do fmt.sbprint(&sb, other_cell.imports_string)
 	append(&sb.buf, ..import_stmts.buf[:])
 
 	// CELL VARIABLES //

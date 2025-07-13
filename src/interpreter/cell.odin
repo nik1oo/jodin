@@ -237,6 +237,11 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	context = cell.cell_context
 	session: = cell.session
 
+	defer {
+		if err != NOERR {
+			print_cell_content(cell)
+			print_cell_code(cell) } }
+
 	// WRITE DLL //
 	if os.exists(cell.source_filepath) do os.remove(cell.source_filepath)
 	err = os.write_entire_file_or_err(cell.source_filepath, transmute([]u8)cell.code)
@@ -249,9 +254,8 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	if status == -1 do return session.error_handler(General_Error.Spawn_Error, "Could not execture odin build command.")
 	if ! os.exists(cell.dll_filepath) {
 		build_log, err: = os.read_entire_file_from_filename(build_log_filepath)
-		// TEMP
-		// print_cell_content(cell)
-		// print_cell_code(cell)
+		print_cell_content(cell)
+		print_cell_code(cell)
 		return session.error_handler(General_Error.Compiler_Error, string(build_log)) }
 	os.remove(build_log_filepath)
 
@@ -303,13 +307,13 @@ recompile_cell:: proc(session: ^Session, frontend_cell_id, code_raw: string) -> 
 
 
 print_cell_content:: proc(cell: ^Cell) {
-	fmt.eprintln(ANSI_GREEN, "-----------------------------------------------------")
+	fmt.eprintln(ANSI_BOLD_BLUE, "[CellContent]----------------------------------------", sep="")
 	fmt.eprintln(cell.code_raw)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET) }
+	fmt.eprintln("-----------------------------------------------------", ANSI_RESET, sep="") }
 
 
 print_cell_code:: proc(cell: ^Cell) {
-	fmt.eprintln(ANSI_BOLD_BLUE, "-----------------------------------------------------")
+	fmt.eprintln(ANSI_BOLD_BLUE, "[CellSource]-----------------------------------------", sep="")
 	fmt.eprintln(cell.code)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET) }
+	fmt.eprintln("-----------------------------------------------------", ANSI_RESET, sep="") }
 
