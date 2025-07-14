@@ -2,21 +2,21 @@
 [project]
 name = "jodin"
 version = "0.1.0-alpha"
-description = "Jupyter Kernel for the JOdin interpreter, written in Python."
+description = "Jupyter Kernel for Odin."
 authors = [
     {name = "Nikio",email = "blatnoneshto@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-	"ipython                   (>=9.2.0,         <10.0.0)",
-	"ipykernel                 (>=6.29.5,        <7.0.0)",
-	"pexpect                   (>=4.9.0,         <5.0.0)",
-	"pywin32                   (>=300,           <400)",
-	"jupyter-core              (>=5.8.1,         <6.0.0)",
-	"jupyter-client            (>=8.6.3,         <9.0.0)",
-	"jupyter-console           (>=6.6.3,         <7.0.0)",
-	"notebook                  (>=7.4.3,         <8.0.0)",
+	"ipython                   (>=9.2.0,  <10.0.0)",
+	"ipykernel                 (>=6.29.5, <7.0.0)",
+	"pexpect                   (>=4.9.0,  <5.0.0)",
+	"jupyter-core              (>=5.8.1,  <6.0.0)",
+	"jupyter-client            (>=8.6.3,  <9.0.0)",
+	"jupyter-console           (>=6.6.3,  <7.0.0)",
+	"notebook                  (>=7.4.3,  <8.0.0)",
+	"pywin32                   (>=300,    <400);    sys_platform == \"win32\"",
 ]
 
 [tool.poetry]

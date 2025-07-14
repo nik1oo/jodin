@@ -192,7 +192,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 			visitor_data: ^Visitor_Data = cast(^Visitor_Data)v.data
 			// fmt.eprintfln("Visiting node <%s> of type<%T>", node_to_string(visitor_data.pp, node^), reflect.get_union_variant(node.derived))
 			pos: = node.pos.offset
-			curr_scope: = [2]int{queue.peek_back(&visitor_data.scope_stack).x, queue.peek_back(&visitor_data.scope_stack).y }
+			curr_scope: = [2]int{queue.back_ptr(&visitor_data.scope_stack).x, queue.back_ptr(&visitor_data.scope_stack).y }
 			// fmt.eprintfln("%s: %d -> %d, %d", node_to_string(visitor_data.pp, node^), pos, curr_scope.x, curr_scope.y)
 			for name, shadowing_pos in visitor_data.shadowed {
 				if shadowing_pos.depth < visitor_data.scope_depth do continue
@@ -200,8 +200,8 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 				if queue.len(visitor_data.scope_stack) > 0 do if ! in_range(pos, curr_scope.x, curr_scope.y) {
 					// fmt.eprintfln("Shadowed variable %s has left shadowing scope %d, %d.", name, curr_scope.x, curr_scope.y)
 					delete_key(&visitor_data.shadowed, name) } }
-			if queue.len(visitor_data.scope_stack) > 0 do if ! in_range(pos, queue.peek_back(&visitor_data.scope_stack).x, queue.peek_back(&visitor_data.scope_stack).y) {
-				// fmt.eprintfln("%d out of range of %d,%d. Exiting scope at:\n %s", pos, queue.peek_back(&visitor_data.scope_stack).x, queue.peek_back(&visitor_data.scope_stack).y, node_to_string(visitor_data.pp, node^))
+			if queue.len(visitor_data.scope_stack) > 0 do if ! in_range(pos, queue.back_ptr(&visitor_data.scope_stack).x, queue.back_ptr(&visitor_data.scope_stack).y) {
+				// fmt.eprintfln("%d out of range of %d,%d. Exiting scope at:\n %s", pos, queue.back_ptr(&visitor_data.scope_stack).x, queue.back_ptr(&visitor_data.scope_stack).y, node_to_string(visitor_data.pp, node^))
 				visitor_data.scope_depth -= 1
 				queue.pop_back(&visitor_data.scope_stack) }
 			#partial switch ident in node.derived {

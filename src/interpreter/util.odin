@@ -59,10 +59,6 @@ open_or_make:: proc(dir: string) -> (os.Handle, os.Errno) {
 	return os.open(dir, os.O_RDWR) }
 
 
-windows_get_last_error:: proc() -> windows.System_Error {
-	return auto_cast windows.GetLastError() }
-
-
 get_temp_directory:: proc() -> string {
 	return filepath.join({os.get_current_directory(), "temp"}) }
 

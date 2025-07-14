@@ -4,71 +4,50 @@ draft = false
 title = 'Installation'
 +++
 
-Requirements:
+== Requirements
+
 - Make installed.
 - Odin version >=dev-2025-02, <=dev-2025-06 installed.
 - Python version >=3.12 installed.
-- PIP or Poetry installed.
+- Jupyter installed.
+- Poetry installed.
 
-**1.** Clone the repo:
+== Installing
 
-```
-git clone https://github.com/nik1oo/jodin.git
-```
-
-**2.** Compile the JOdin interpreter and install the shared:jodin package:
+**1.** Compile the JODIN interpreter and install the JODIN package.
 
 ```
 make -C ./src/interpreter/
 ```
 
-**3.** Install JOdin kernel via PIP or Poetry.
-
-Using PIP:
+**2.** Activate the virtual environment by executing the command printed by the following command.
 
 ```
-python -m pip install ./src/ipy_kernel
-jupyter kernelspec install ./src/ipy_kernel/src/jodin --name=jodin
+poetry env activate
 ```
 
-Using Poetry:
+**3.** Install the dependencies.
 
 ```
-cd ./src/ipy_kernel/
-poetry install --compile
-poetry run jupyter kernelspec install ./src/jodin --name=jodin
-cd ../..
+poetry --directory=./src/ipy_kernel install --compile
 ```
 
-<h2 align="center">Running</h2>
+**4.** Tnstall the JODIN kernel.
 
-To start with the console front-end:
 ```
-jupyter console --kernel jodin
+poetry --directory=./src/ipy_kernel run jupyter kernelspec install ./src/jodin --name=jodin --user
 ```
 
-To start with the console front-end using Poetry python:
+== Running
+
+To start the console front-end execute the following command:
+
 ```
 poetry -C=./src/ipy_kernel run jupyter console --kernel jodin
 ```
 
-To start with the notebook front-end:
+To start the notebook front-end execute the following command, then select the JODIN kernel from _Kernel_ > _Change Kernel_.
 
 ```
-jupyter notebook
+poetry -C=./src/ipy_kernel run jupyter notebook ../../examples/demo.ipynb
 ```
-
-To start with the notebook front-end using Poetry python:
-```
-poetry -C=./src/ipy_kernel run jupyter notebook
-```
-
-Once in notebook, to select the JOdin kernel go to `Kernel > Change Kernel...` and select `JODIN`.
-
-To open the demo notebook:
-
-```
-jupyter notebook examples/demo.ipynb
-```
-
-

@@ -1,7 +1,14 @@
 
-
-JODIN_FOLDER := "$(shell odin root)shared\jodin"
-JODIN_EXE := "$(shell odin root)shared\jodin\jodin.exe"
+ifeq ($(OS),Windows_NT)
+	JODIN_FOLDER := "$(shell odin root)shared\jodin"
+	JODIN_EXE := "$(shell odin root)shared\jodin\jodin.exe"
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		JODIN_FOLDER := "$(shell odin root)shared/jodin"
+		JODIN_EXE := "$(shell odin root)shared/jodin/jodin.exe"
+	endif
+endif
 
 main:
 	rm -rf $(JODIN_FOLDER)

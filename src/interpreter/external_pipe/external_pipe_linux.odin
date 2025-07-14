@@ -2,6 +2,7 @@ package external_pipe
 import "core:fmt"
 import "core:os"
 import "core:sys/linux"
+import "core:strings"
 
 
 // I am starting to work on this. //
@@ -17,12 +18,17 @@ make_path:: proc(name: string) -> string {
 
 init_by_path:: proc(pipe: ^External_Pipe, path: string, mode: int, size: uint) -> (err: os.Error) {
 	if ! ((mode == os.O_RDONLY) || (mode == os.O_WRONLY)) do return os.General_Error.Unsupported
-	if ! pipe_path_is_valid(path) do return os.General_Error.Unsupported
+	if ! pipe_path_is_valid(path) do return os.General_Error.Invalid_Path
 	pipe.path = path
-	err = linux.mknod(strings.clone_to_cstring(path), linux.S_IFFIFO, 0)
+	err = linux.mknod(strings.clone_to_cstring(path), {.IFIFO}, 0)
 	if err != os.General_Error.None do return err
 	pipe.handle, err = os.open(path, mode)
 	return err }
+
+
+connect:: proc(pipe: ^External_Pipe) -> (err: os.Error) {
+	if pipe.handle != os.INVALID_HANDLE do return os.General_Error.Not_Exist
+	return os.General_Error.None }
 
 
 destroy:: proc(pipe: ^External_Pipe) -> (err: os.Error) {
