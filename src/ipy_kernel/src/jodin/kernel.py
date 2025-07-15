@@ -10,9 +10,6 @@ import shutil
 import pexpect
 import pexpect.popen_spawn
 import pexpect.replwrap
-import win32pipe
-import win32file
-import win32api
 from .external_pipe import External_Pipe
 
 
@@ -29,6 +26,7 @@ KERNEL_IOPUB_PIPE_BUFFER_SIZE  = 16 * MEGABYTE
 ANSI_RED                       = "\033[2;31m"
 ANSI_GREEN                     = "\033[2;32m"
 ANSI_RESET                     = "\033[0m"
+KERNEL_LOG_PREFIX              = ANSI_GREEN + "[JodinKernel] " + ANSI_RESET
 KERNEL_ERROR_PREFIX            = ANSI_RED + "[JodinKernel] " + ANSI_RESET
 
 
@@ -96,18 +94,23 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
         super().__init__(**kwargs)
         redirected_stdout = sys.stdout
         sys.stdout = sys.__stdout__
-        temp_directory = os.getcwd() + r"\temp"
+        if platform.system() == "Windows":
+            temp_directory = os.getcwd() + r"\.temp"
+            self.interpreter_path = 'jodin.exe'
+        elif platform.system() == "Linux":
+            temp_directory = os.getcwd() + r"/.temp"
+            self.interpreter_path = 'jodin.out'
+        print_and_flush(KERNEL_LOG_PREFIX + " Temp directory: " + temp_directory)
         if os.path.exists(temp_directory):
             try:
                 shutil.rmtree(temp_directory)
             except:
                 pass
-        self.interpreter_path = 'jodin.exe'
         subprocess.Popen(self.interpreter_path)
-        print_and_flush(ANSI_GREEN + "[JodinKernel]" + ANSI_RESET + " Started jodin interpreter.")
+        print_and_flush(KERNEL_LOG_PREFIX + " Started jodin interpreter.")
         self.connect_to_server()
         sys.stdout = redirected_stdout
-        print_and_flush(ANSI_GREEN + "[JodinKernel]" + ANSI_RESET + " Started jodin kernel.")
+        print_and_flush(KERNEL_LOG_PREFIX + " Started jodin kernel.")
 
 
     def send_message(self, message):
@@ -284,8 +287,8 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
 
 
     def connect_to_server(self):
-        self.code_pipe = External_Pipe(KERNEL_SOURCE_PIPE_NAME, win32file.GENERIC_WRITE, KERNEL_SOURCE_PIPE_BUFFER_SIZE)
-        self.stdout_pipe = External_Pipe(KERNEL_STDOUT_PIPE_NAME, win32file.GENERIC_READ, KERNEL_STDOUT_PIPE_BUFFER_SIZE)
-        self.message_pipe = External_Pipe(KERNEL_IOPUB_PIPE_NAME, win32file.GENERIC_READ, KERNEL_IOPUB_PIPE_BUFFER_SIZE)
+        self.code_pipe = External_Pipe(KERNEL_SOURCE_PIPE_NAME, "write", KERNEL_SOURCE_PIPE_BUFFER_SIZE)
+        self.stdout_pipe = External_Pipe(KERNEL_STDOUT_PIPE_NAME, "read", KERNEL_STDOUT_PIPE_BUFFER_SIZE)
+        self.message_pipe = External_Pipe(KERNEL_IOPUB_PIPE_NAME, "read", KERNEL_IOPUB_PIPE_BUFFER_SIZE)
         print_and_flush(ANSI_GREEN + "[JodinKernel]" + ANSI_RESET + " Connected to jodin interpreter.")
 

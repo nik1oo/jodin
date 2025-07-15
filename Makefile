@@ -28,7 +28,8 @@ test_notebooks:
 
 test_interpreter:
 	clear
-	$(PYTHON) -m pip install ./src/ipy_kernel
-	make -C ./src/interpreter/ test
-	make -C ./src/ipy_kernel/ test
+	poetry --directory=./src/ipy_kernel run pip install .
+	poetry --directory=./src/ipy_kernel run pip install pytest
+	make -C ./src/interpreter/ test -B
+	make -C ./src/ipy_kernel/ test -B
 

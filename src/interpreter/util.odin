@@ -60,7 +60,7 @@ open_or_make:: proc(dir: string) -> (os.Handle, os.Errno) {
 
 
 get_temp_directory:: proc() -> string {
-	return filepath.join({os.get_current_directory(), "temp"}) }
+	return filepath.join({os.get_current_directory(), ".temp"}) }
 
 
 clear_directory:: proc(path: string) -> (err: Error) {

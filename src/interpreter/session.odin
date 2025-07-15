@@ -77,10 +77,10 @@ start_session:: proc(session: ^Session, error_handler: proc(err: Error, msg: str
 	session.cells = make(map[string]^Cell)
 	session.__symmap__ = make(map[string]rawptr)
 	temp_directory: = get_temp_directory()
-	if ! os.exists(temp_directory) do os.make_directory(temp_directory, os.O_RDWR)
+	if ! os.exists(temp_directory) do os.make_directory(temp_directory, TEMP_DIRECTORY_MODE)
 	session.session_temp_directory = filepath.join({temp_directory, session.name})
 	if ! os.exists(session.session_temp_directory) {
-		err = os.Error(os.make_directory(session.session_temp_directory, os.O_RDWR))
+		err = os.Error(os.make_directory(session.session_temp_directory, TEMP_DIRECTORY_MODE))
 		if err != os.Error(os.General_Error.None) do return session.error_handler(err, "Couldn't create temp folder %s.", session.session_temp_directory) }
 	session_output_to_console(session)
 	return NOERR }

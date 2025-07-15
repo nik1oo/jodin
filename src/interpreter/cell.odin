@@ -107,7 +107,7 @@ init_cell:: proc(cell: ^Cell, session: ^Session, frontend_cell_id: string, code_
 	cell.dll_filepath = filepath.join({cell.session.session_temp_directory, cell.name, fmt.aprintf("%s.dll", cell.name)})
 
 	// DIRECTORIES //
-	err = os.make_directory(cell.package_filepath)
+	err = os.make_directory(cell.package_filepath, TEMP_DIRECTORY_MODE)
 	if err != os.Error(os.General_Error.None) do return session.error_handler(err, "Could not make directory %s.", cell.package_filepath)
 
 	// PIPES FROM THE DLL TO THE INTERPRETER //

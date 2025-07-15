@@ -35,9 +35,6 @@ General_Error:: enum {
 	DLL_Error }
 
 
-INTERPRETER_ERROR_PREFIX:: ANSI_RED + "[JodinInterpreter] " + ANSI_RESET
-
-
 Error:: union {
 	os.Error,
 	runtime.Allocator_Error,

@@ -7,7 +7,7 @@ import "shared:jodin/external_pipe"
 
 main:: proc() {
 	pipe: external_pipe.External_Pipe
-	external_pipe.init_by_name(&pipe, "test_client_server_message_early", os.O_RDONLY)
+	external_pipe.init_by_name(&pipe, "test_client_server_message_early", os.O_RDONLY, 1000)
 	external_pipe.connect(&pipe)
 	time.sleep(2 * time.Second)
 	message, err: = external_pipe.read_string(&pipe, external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)

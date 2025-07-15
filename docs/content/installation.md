@@ -4,7 +4,7 @@ draft = false
 title = 'Installation'
 +++
 
-== Requirements
+## Requirements
 
 - Make installed.
 - Odin version >=dev-2025-02, <=dev-2025-06 installed.
@@ -12,7 +12,7 @@ title = 'Installation'
 - Jupyter installed.
 - Poetry installed.
 
-== Installing
+## Installing
 
 **1.** Compile the JODIN interpreter and install the JODIN package.
 
@@ -20,25 +20,27 @@ title = 'Installation'
 make -C ./src/interpreter/
 ```
 
-**2.** Activate the virtual environment by executing the command printed by the following command.
+**2.** Add JODIN directory to PATH.
+
+**3.** Activate the virtual environment by executing the command printed by the following command.
 
 ```
-poetry env activate
+poetry --directory=./src/ipy_kernel env activate
 ```
 
-**3.** Install the dependencies.
+**4.** Install the dependencies.
 
 ```
 poetry --directory=./src/ipy_kernel install --compile
 ```
 
-**4.** Tnstall the JODIN kernel.
+**5.** Tnstall the JODIN kernel.
 
 ```
 poetry --directory=./src/ipy_kernel run jupyter kernelspec install ./src/jodin --name=jodin --user
 ```
 
-== Running
+## Running
 
 To start the console front-end execute the following command:
 

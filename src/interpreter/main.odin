@@ -38,6 +38,9 @@ KERNEL_IOPUB_PIPE_BUFFER_SIZE::  16 * mem.Megabyte
 CELL_STDOUT_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_STDERR_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_ARENA_SIZE::                32 * mem.Megabyte
+TEMP_DIRECTORY_MODE::            os.S_IRWXU | os.S_IRGRP | os.S_IXGRP
+INTERPRETER_LOG_PREFIX::         ANSI_GREEN + "[JodinInterpreter] " + ANSI_RESET
+INTERPRETER_ERROR_PREFIX::       ANSI_RED + "[JodinInterpreter] " + ANSI_RESET
 
 
 // main:: proc() {
@@ -54,7 +57,7 @@ main:: proc() {
 		wrapped_allocator=context.allocator,
 		report_alloc_error=report_alloc_error,
 		allocator_allocator=runtime.heap_allocator())
-	fmt.println(ANSI_GREEN, "[JodinInterpreter]", ANSI_RESET, " jodin: ", "Version: ", VERSION, sep = "")
+	fmt.println(INTERPRETER_LOG_PREFIX, "jodin: ", "Version: ", VERSION, sep = "")
 	session: ^Session = new(Session)
 	start_session(session, error_handler)
 	defer end_session(session)

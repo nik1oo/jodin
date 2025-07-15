@@ -30,21 +30,37 @@ KERNEL_IOPUB_PIPE_NAME::  `jodin_kernel_iopub`
 
 
 connect_to_ipy_kernel:: proc(session: ^Session) -> (err: Error) {
-	err = os.Error(os.General_Error.Broken_Pipe)
-	external_pipe.init_by_name(&session.kernel_source_pipe, KERNEL_SOURCE_PIPE_NAME, os.O_RDONLY, KERNEL_SOURCE_PIPE_BUFFER_SIZE) or_return
-	external_pipe.connect(&session.kernel_source_pipe) or_return
-	external_pipe.init_by_name(&session.kernel_stdout_pipe, KERNEL_STDOUT_PIPE_NAME, os.O_WRONLY, KERNEL_STDOUT_PIPE_BUFFER_SIZE) or_return
-	external_pipe.connect(&session.kernel_stdout_pipe) or_return
-	external_pipe.init_by_name(&session.kernel_iopub_pipe, KERNEL_IOPUB_PIPE_NAME, os.O_WRONLY, KERNEL_IOPUB_PIPE_BUFFER_SIZE) or_return
-	external_pipe.connect(&session.kernel_iopub_pipe) or_return
+	fmt.eprintln("creating kernel source pipe")
+	if err = external_pipe.init_by_name(
+		&session.kernel_source_pipe,
+		KERNEL_SOURCE_PIPE_NAME,
+		os.O_RDONLY,
+		KERNEL_SOURCE_PIPE_BUFFER_SIZE); err != NOERR do return err
+	fmt.eprintln("connecting to kernel source pipe")
+	if err = external_pipe.connect(&session.kernel_source_pipe); err != NOERR do return err
+	fmt.eprintln("creating kernel stdout pipe")
+	if err = external_pipe.init_by_name(
+		&session.kernel_stdout_pipe,
+		KERNEL_STDOUT_PIPE_NAME,
+		os.O_WRONLY,
+		KERNEL_STDOUT_PIPE_BUFFER_SIZE); err != NOERR do return err
+	fmt.eprintln("connecting to kernel stdout pipe")
+	if err = external_pipe.connect(&session.kernel_stdout_pipe); err != NOERR do return err
+	fmt.eprintln("creating kernel iopub pipe")
+	if err = external_pipe.init_by_name(
+		&session.kernel_iopub_pipe,
+		KERNEL_IOPUB_PIPE_NAME,
+		os.O_WRONLY,
+		KERNEL_IOPUB_PIPE_BUFFER_SIZE); err != NOERR do return err
+	fmt.eprintln("connecting to kernel iopub pipe")
+	if err = external_pipe.connect(&session.kernel_iopub_pipe); err != NOERR do return err
 	return NOERR }
 
 
 disconnect_from_ipy_kernel:: proc(session: ^Session) -> (err: Error) {
-	err = os.Error(os.General_Error.Closed)
-	external_pipe.destroy(&session.kernel_source_pipe) or_return
-	external_pipe.destroy(&session.kernel_stdout_pipe) or_return
-	external_pipe.destroy(&session.kernel_iopub_pipe) or_return
+	if err = external_pipe.destroy(&session.kernel_source_pipe); err != NOERR do return err
+	if err = external_pipe.destroy(&session.kernel_stdout_pipe); err != NOERR do return err
+	if err = external_pipe.destroy(&session.kernel_iopub_pipe); err != NOERR do return err
 	return NOERR }
 
 
