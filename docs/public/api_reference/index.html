@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+<html><head><script src="/jodin/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=jodin/livereload" data-no-instant defer></script>
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Reference</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/fonts.css">
-    <link defer rel="stylesheet" href="/css/syntax.css">
+    <link rel="stylesheet" href="/jodin/css/style.css">
+    <link rel="stylesheet" href="/jodin/css/fonts.css">
+    <link defer rel="stylesheet" href="/jodin/css/syntax.css">
 
-</head><body><header>
-    <a id="site-title" href="/">
-        Jodin
+</head><body><header id="main-header">
+    <a id="site-title" href="/jodin/">
+        JODIN
     </a>
     <section id="social-links" class="header-group">
         <a href=https://github.com/nik1oo/jodin class="header-icon">
@@ -25,6 +25,7 @@
 </header>
 
 <section id="post">
+
     <h1 id="post-title">Reference</h1>
     <time>
         2025-07-02
@@ -34,102 +35,102 @@
         <p>The Jodin package should be located in <strong>Odin/shared/jodin</strong>, which is implicitly imported in every cell. Everything here is under namespace <strong>jodin</strong>.</p>
 <hr>
 <h2 id="cell_info">Cell_Info</h2>
-<pre tabindex="0"><code>Cell_Info :: struct {
-	id:   string,
-	name: string,
-	code: string
-}
-</code></pre><p>Object holding information about the current cell.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>Cell_Info <span style="color:#f92672">::</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	id<span style="color:#f92672">:</span>   <span style="color:#66d9ef">string</span>,
+</span></span><span style="display:flex;"><span>	name<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span>,
+</span></span><span style="display:flex;"><span>	code<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Object holding information about the current cell.</p>
 <hr>
 <h2 id="audio_format">Audio_Format</h2>
-<pre tabindex="0"><code>Audio_Format :: enum u8 {
-	AAC,
-	MP3,
-	WAV,
-	WEBM
-}
-</code></pre><p>Audio formats supported by the Jupyter front-end.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>Audio_Format <span style="color:#f92672">::</span> <span style="color:#66d9ef">enum</span> <span style="color:#66d9ef">u8</span> {
+</span></span><span style="display:flex;"><span>	AAC,
+</span></span><span style="display:flex;"><span>	MP3,
+</span></span><span style="display:flex;"><span>	WAV,
+</span></span><span style="display:flex;"><span>	WEBM
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Audio formats supported by the Jupyter front-end.</p>
 <hr>
 <h2 id="image_format">Image_Format</h2>
-<pre tabindex="0"><code>Image_Format :: enum u8 {
-	PNG,
-	JPEG,
-	GIF,
-	WEBP
-}
-</code></pre><p>Image formats supported by the Jupyter front-end.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>Image_Format <span style="color:#f92672">::</span> <span style="color:#66d9ef">enum</span> <span style="color:#66d9ef">u8</span> {
+</span></span><span style="display:flex;"><span>	PNG,
+</span></span><span style="display:flex;"><span>	JPEG,
+</span></span><span style="display:flex;"><span>	GIF,
+</span></span><span style="display:flex;"><span>	WEBP
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Image formats supported by the Jupyter front-end.</p>
 <hr>
 <h2 id="cell_info-1">cell_info</h2>
-<pre tabindex="0"><code>cell_info :: proc() -&gt; Cell_Info {…}
-</code></pre><p>Get info about the current cell.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>cell_info <span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>() <span style="color:#f92672">-&gt;</span> Cell_Info {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><p>Get info about the current cell.</p>
 <hr>
 <h2 id="clear_output">clear_output</h2>
-<pre tabindex="0"><code>clear_output :: proc(
-	wait: bool = false
-) -&gt; bool {…}
-</code></pre><p>Clear the output currently visible in the front-end. If <strong>wait</strong> is <strong>true</strong>, the output will be cleared only when new output becomes available.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>clear_output <span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>(
+</span></span><span style="display:flex;"><span>	wait<span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">bool</span> {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><p>Clear the output currently visible in the front-end. If <strong>wait</strong> is <strong>true</strong>, the output will be cleared only when new output becomes available.</p>
 <hr>
 <h2 id="display_audio">display_audio</h2>
-<pre tabindex="0"><code>display_audio :: proc(
-	data: []u8,
-	format: Audio_Format,
-	element_id: string = &#34;&#34;,
-	loc: = #caller_location
-) -&gt; (err: Error) {…}
-</code></pre><p>Display audio in the front-end.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>display_audio <span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>(
+</span></span><span style="display:flex;"><span>	data<span style="color:#f92672">:</span> []<span style="color:#66d9ef">u8</span>,
+</span></span><span style="display:flex;"><span>	format<span style="color:#f92672">:</span> Audio_Format,
+</span></span><span style="display:flex;"><span>	element_id<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>	loc<span style="color:#f92672">:</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">#caller_location</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> (err<span style="color:#f92672">:</span> Error) {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><p>Display audio in the front-end.</p>
 <hr>
 <h2 id="display_image">display_image</h2>
-<pre tabindex="0"><code>display_image :: proc{
-	display_image_from_data_and_format_and_size,
-	display_image_from_data_and_format,
-	display_image_from_filepath,
-	display_image_from_filepath_and_size
-}
-</code></pre><p>Display image in the front-end.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>display_image <span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>{
+</span></span><span style="display:flex;"><span>	display_image_from_data_and_format_and_size,
+</span></span><span style="display:flex;"><span>	display_image_from_data_and_format,
+</span></span><span style="display:flex;"><span>	display_image_from_filepath,
+</span></span><span style="display:flex;"><span>	display_image_from_filepath_and_size
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Display image in the front-end.</p>
 <hr>
 <h2 id="display_image_from_data_and_format_and_size">display_image_from_data_and_format_and_size</h2>
-<pre tabindex="0"><code>display_image_from_data_and_format_and_size :: proc(
-	data: []u8,
-	format: Image_Format,
-	size: [2]uint,
-	display_id: string = &#34;&#34;,
-	loc: = #caller_location
-) -&gt; (err: Error) {…}
-</code></pre><hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>display_image_from_data_and_format_and_size <span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>(
+</span></span><span style="display:flex;"><span>	data<span style="color:#f92672">:</span> []<span style="color:#66d9ef">u8</span>,
+</span></span><span style="display:flex;"><span>	format<span style="color:#f92672">:</span> Image_Format,
+</span></span><span style="display:flex;"><span>	size<span style="color:#f92672">:</span> [<span style="color:#a6e22e">2</span>]<span style="color:#66d9ef">uint</span>,
+</span></span><span style="display:flex;"><span>	display_id<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>	loc<span style="color:#f92672">:</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">#caller_location</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> (err<span style="color:#f92672">:</span> Error) {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><hr>
 <h2 id="display_image_from_data_and_format">display_image_from_data_and_format</h2>
-<pre tabindex="0"><code>display_image_from_data_and_format :: proc(
-	data: []u8,
-	format: Image_Format,
-	display_id: string = &#34;&#34;,
-	loc: = #caller_location
-) -&gt; (err: Error) {…}
-</code></pre><hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>display_image_from_data_and_format <span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>(
+</span></span><span style="display:flex;"><span>	data<span style="color:#f92672">:</span> []<span style="color:#66d9ef">u8</span>,
+</span></span><span style="display:flex;"><span>	format<span style="color:#f92672">:</span> Image_Format,
+</span></span><span style="display:flex;"><span>	display_id<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>	loc<span style="color:#f92672">:</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">#caller_location</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> (err<span style="color:#f92672">:</span> Error) {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><hr>
 <h2 id="display_image_from_filepath_and_size">display_image_from_filepath_and_size</h2>
-<pre tabindex="0"><code>display_image_from_filepath_and_size :: proc(
-	path: string,
-	size: [2]uint,
-	display_id: string = &#34;&#34;,
-	loc: = #caller_location
-) -&gt; (err: Error) {…}
-</code></pre><hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>display_image_from_filepath_and_size <span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>(
+</span></span><span style="display:flex;"><span>	path<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span>,
+</span></span><span style="display:flex;"><span>	size<span style="color:#f92672">:</span> [<span style="color:#a6e22e">2</span>]<span style="color:#66d9ef">uint</span>,
+</span></span><span style="display:flex;"><span>	display_id<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>	loc<span style="color:#f92672">:</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">#caller_location</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> (err<span style="color:#f92672">:</span> Error) {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><hr>
 <h2 id="display_image_from_filepath">display_image_from_filepath</h2>
-<pre tabindex="0"><code>display_image_from_filepath:: proc(
-	path: string,
-	display_id: string = &#34;&#34;,
-	loc: = #caller_location
-) -&gt; (err: Error) {…}
-</code></pre><hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>display_image_from_filepath<span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>(
+</span></span><span style="display:flex;"><span>	path<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span>,
+</span></span><span style="display:flex;"><span>	display_id<span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>	loc<span style="color:#f92672">:</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">#caller_location</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> (err<span style="color:#f92672">:</span> Error) {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><hr>
 <h2 id="inspect">inspect</h2>
-<pre tabindex="0"><code>inspect:: proc(
-	x: $T
-) {…}
-</code></pre><p>Pretty-print information about an object.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>inspect<span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>(
+</span></span><span style="display:flex;"><span>	x<span style="color:#f92672">:</span> <span style="color:#960050;background-color:#1e0010">$</span>T
+</span></span><span style="display:flex;"><span>) {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><p>Pretty-print information about an object.</p>
 <hr>
 <h2 id="inspect_detailed">inspect_detailed</h2>
-<pre tabindex="0"><code>inspect_detailed:: proc(
-	x: $T
-) {…}
-</code></pre><p>Pretty-print detailed information about an object.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-odin" data-lang="odin"><span style="display:flex;"><span>inspect_detailed<span style="color:#f92672">::</span> <span style="color:#66d9ef">proc</span>(
+</span></span><span style="display:flex;"><span>	x<span style="color:#f92672">:</span> <span style="color:#960050;background-color:#1e0010">$</span>T
+</span></span><span style="display:flex;"><span>) {<span style="color:#960050;background-color:#1e0010">…</span>}
+</span></span></code></pre></div><p>Pretty-print detailed information about an object.</p>
 <hr>
 
     </div>
@@ -137,9 +138,7 @@
 
 
 
-<footer>
-    Powered by <a href="https://gohugo.io/">Hugo</a>, using theme <a
-        href="https://github.com/LuisSousaRego/Ardeidae">Ardeidae</a>
+<footer id="greybeard">
 </footer></body>
 
 </html>

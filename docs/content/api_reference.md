@@ -10,7 +10,7 @@ The Jodin package should be located in **Odin/shared/jodin**, which is implicitl
 
 ## Cell_Info
 
-```
+```odin
 Cell_Info :: struct {
 	id:   string,
 	name: string,
@@ -24,7 +24,7 @@ Object holding information about the current cell.
 
 ## Audio_Format
 
-```
+```odin
 Audio_Format :: enum u8 {
 	AAC,
 	MP3,
@@ -39,7 +39,7 @@ Audio formats supported by the Jupyter front-end.
 
 ## Image_Format
 
-```
+```odin
 Image_Format :: enum u8 {
 	PNG,
 	JPEG,
@@ -54,7 +54,7 @@ Image formats supported by the Jupyter front-end.
 
 ## cell_info
 
-```
+```odin
 cell_info :: proc() -> Cell_Info {…}
 ```
 
@@ -64,7 +64,7 @@ Get info about the current cell.
 
 ## clear_output
 
-```
+```odin
 clear_output :: proc(
 	wait: bool = false
 ) -> bool {…}
@@ -76,7 +76,7 @@ Clear the output currently visible in the front-end. If **wait** is **true**, th
 
 ## display_audio
 
-```
+```odin
 display_audio :: proc(
 	data: []u8,
 	format: Audio_Format,
@@ -91,7 +91,7 @@ Display audio in the front-end.
 
 ## display_image
 
-```
+```odin
 display_image :: proc{
 	display_image_from_data_and_format_and_size,
 	display_image_from_data_and_format,
@@ -106,7 +106,7 @@ Display image in the front-end.
 
 ## display_image_from_data_and_format_and_size
 
-```
+```odin
 display_image_from_data_and_format_and_size :: proc(
 	data: []u8,
 	format: Image_Format,
@@ -120,7 +120,7 @@ display_image_from_data_and_format_and_size :: proc(
 
 ## display_image_from_data_and_format
 
-```
+```odin
 display_image_from_data_and_format :: proc(
 	data: []u8,
 	format: Image_Format,
@@ -133,7 +133,7 @@ display_image_from_data_and_format :: proc(
 
 ## display_image_from_filepath_and_size
 
-```
+```odin
 display_image_from_filepath_and_size :: proc(
 	path: string,
 	size: [2]uint,
@@ -146,7 +146,7 @@ display_image_from_filepath_and_size :: proc(
 
 ## display_image_from_filepath
 
-```
+```odin
 display_image_from_filepath:: proc(
 	path: string,
 	display_id: string = "",
@@ -158,7 +158,7 @@ display_image_from_filepath:: proc(
 
 ## inspect
 
-```
+```odin
 inspect:: proc(
 	x: $T
 ) {…}
@@ -170,7 +170,7 @@ Pretty-print information about an object.
 
 ## inspect_detailed
 
-```
+```odin
 inspect_detailed:: proc(
 	x: $T
 ) {…}

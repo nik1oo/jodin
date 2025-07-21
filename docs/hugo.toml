@@ -1,7 +1,6 @@
-baseURL = 'https://jodin.org/'
+baseURL = 'https://nik1oo.github.io/jodin/'
 languageCode = 'en-us'
-title = 'Jodin'
-theme = 'ardeidae'
+title = 'JODIN'
 
 [caches]
   [caches.images]

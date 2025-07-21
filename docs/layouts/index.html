@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+{{- partial "head.html" . -}}
+
+
+<body id="flex">
+    <div id="demo-container">
+        <img src="demo.gif" alt="Jodin logo" class="demo-video">
+        <img src="demo.gif" alt="Jodin logo" class="demo-video">
+        <img src="demo.gif" alt="Jodin logo" class="demo-video">
+        <img src="demo.gif" alt="Jodin logo" class="demo-video">
+    </div>
+    <div id="landing">
+        <div id="landing-content">
+            {{- partial "header.html" . -}}
+            <section id="posts-container">
+                <ul>
+                    <li class="post">
+                    {{- partial "main.html" . -}}
+                    </li>
+                    {{ range .Site.RegularPages.ByPublishDate }}
+                    <li class="post">
+                        <a href="{{ .Permalink }}" class="button">
+                            {{ .Title }}
+                        </a>
+                    </li>
+                    {{ end }}
+                </ul>
+            </section>
+        </div>
+        <div id="landing-canva-2"></div>
+    </div>
+</body>
+
+</html>
