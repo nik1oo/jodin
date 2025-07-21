@@ -514,3 +514,76 @@ set_size:: proc(
 	fmt.sbprintfln(&canvas.sb, "set size %d,%d",
 		size.x, size.y) }
 
+
+Terminal:: enum {
+	Aifm,
+	Aqua,
+	Be,
+	Block,
+	Caca,
+	Cairolatex,
+	Canvas,
+	Cgm,
+	Context,
+	Debug,
+	Domterm,
+	Dumb,
+	Dxf,
+	Emf,
+	Epscairo,
+	Epslatex,
+	Epson_180dpi,
+	Fig,
+	Gif,
+	Gpic,
+	Grass,
+	HP_terminals,
+	Hpgl,
+	Imagen,
+	Jpeg,
+	Kittycairo,
+	Kittygd,
+	Latex,
+	Lua,
+	Mp,
+	Pbm,
+	Pcl5,
+	Pdfcairo,
+	Pict2e,
+	Pm,
+	Png,
+	Pngcairo,
+	Postscript,
+	Pslatex,
+	Pstex,
+	Pstricks,
+	Qt,
+	Regis,
+	Svg,
+	Svga,
+	Tek40,
+	Tek410x,
+	Texdraw,
+	Tgif,
+	Tikz,
+	Tkcanvas,
+	Webp,
+	Windows,
+	Wxt,
+	X11,
+	Xlib }
+
+
+set_terminal:: proc(
+		canvas: ^Canvas,
+		terminal: Terminal) {
+	fmt.sbprintfln(&canvas.sb, "set terminal %s",
+		strings.to_lower(fmt.aprintf("%v", terminal))) }
+
+
+set_terminal_pngcairo:: proc(
+		canvas: ^Canvas,
+		size: [2]int = { 600, 400 }) {
+	fmt.sbprintfln(&canvas.sb, "set terminal pngcairo size %d,%d",
+		size.x, size.y) }
+

@@ -14,12 +14,16 @@ endif
 
 main:
 	clear
+	@echo [Make] Compiling interpreter...
 	make -C ./src/interpreter/
-	$(PYTHON) -m pip install ./src/ipy_kernel
-	jupyter kernelspec install ./src/ipy_kernel/src/jodin --name=jodin
-	clear
-	// jupyter server
-	jupyter notebook examples/demo.ipynb
+	@echo [Make] Compiling kernel...
+	poetry --directory=./src/ipy_kernel install --compile
+	@echo [Make] Installing kernel...
+	poetry --directory=./src/ipy_kernel run jupyter kernelspec install ./src/jodin --name=jodin --user
+	@echo [Make] Running notebook...
+	# jupyter server
+	# poetry -C=./src/ipy_kernel run jupyter notebook ../../../notebooks/numerical_optimization.ipynb
+	poetry -C=./src/ipy_kernel run jupyter notebook ../../../notebooks/numerical_optimization.ipynb
 
 
 test_notebooks:

@@ -56,7 +56,7 @@ plot:: proc(
 		// iteration: _,
 		// definition: Maybe(_),
 		// sampling_range: Maybe(_),
-		expression: Maybe(^Expression) = nil,
+		expression: Maybe(Expression) = nil,
 		data_file: Maybe(string) = nil,
 		// data_source: Maybe(_),
 		// keyentry: Maybe(_),
@@ -69,7 +69,7 @@ plot:: proc(
 	// case definition != nil:
 	case expression != nil:
 		fmt.sbprintf(&canvas.sb, "%s ",
-			expression_aprint(expression.(^Expression)))
+			expression_aprint(expression.(Expression)))
 	case data_file != nil:
 		fmt.sbprintf(&canvas.sb, "\"%s\" ",
 			data_file.(string))
@@ -127,7 +127,7 @@ command:: proc(
 
 render_canvas:: proc(canvas: ^Canvas) {
 	text: = strings.to_string(canvas.sb)
-	fmt.println(text)
+	// fmt.println(text)
 	handle, err: = os.open("plot.gp", os.O_RDWR | os.O_CREATE)
 	os.write_string(handle, text)
 	command: = fmt.aprintfln("gnuplot -c plot.gp")

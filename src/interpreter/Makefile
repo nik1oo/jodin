@@ -15,7 +15,8 @@ endif
 main:
 	echo $(shell odin root)
 	rm -rf $(JODIN_FOLDER)
-	cp -r ../interpreter $(JODIN_FOLDER)
+	mkdir $(JODIN_FOLDER)
+	cp -r * $(JODIN_FOLDER)
 	odin build . -out:../../$(OUT_FILENAME) -debug -max-error-count:8
 
 test:

@@ -38,7 +38,10 @@ KERNEL_IOPUB_PIPE_BUFFER_SIZE::  16 * mem.Megabyte
 CELL_STDOUT_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_STDERR_PIPE_BUFFER_SIZE::   16 * mem.Kilobyte
 CELL_ARENA_SIZE::                32 * mem.Megabyte
-TEMP_DIRECTORY_MODE::            os.S_IRWXU | os.S_IRGRP | os.S_IXGRP
+when ODIN_OS == .Linux {
+	TEMP_DIRECTORY_MODE: u32 :   os.S_IRWXU | os.S_IRGRP | os.S_IXGRP }
+when ODIN_OS == .Windows {
+	TEMP_DIRECTORY_MODE: u32 :   0 }
 INTERPRETER_LOG_PREFIX::         ANSI_GREEN + "[JodinInterpreter] " + ANSI_RESET
 INTERPRETER_ERROR_PREFIX::       ANSI_RED + "[JodinInterpreter] " + ANSI_RESET
 

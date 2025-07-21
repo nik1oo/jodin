@@ -106,7 +106,10 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
                 shutil.rmtree(temp_directory)
             except:
                 pass
-        subprocess.Popen(self.interpreter_path)
+        try: subprocess.Popen(self.interpreter_path)
+        except FileNotFoundError:
+            print_and_flush(KERNEL_ERROR_PREFIX + " Could not find interpreter executable " + self.interpreter_path + ".")
+            return
         print_and_flush(KERNEL_LOG_PREFIX + " Started jodin interpreter.")
         self.connect_to_server()
         sys.stdout = redirected_stdout

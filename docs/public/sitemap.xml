@@ -2,20 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://jodin.org/guide/</loc>
+    <loc>http://localhost:1313/guide/</loc>
     <lastmod>2025-07-02T16:23:07+03:00</lastmod>
   </url><url>
-    <loc>https://jodin.org/</loc>
+    <loc>http://localhost:1313/</loc>
     <lastmod>2025-07-02T16:23:07+03:00</lastmod>
   </url><url>
-    <loc>https://jodin.org/api_reference/</loc>
+    <loc>http://localhost:1313/api_reference/</loc>
     <lastmod>2025-07-02T15:13:58+03:00</lastmod>
   </url><url>
-    <loc>https://jodin.org/installation/</loc>
+    <loc>http://localhost:1313/installation/</loc>
     <lastmod>2025-07-02T03:25:54+03:00</lastmod>
   </url><url>
-    <loc>https://jodin.org/categories/</loc>
+    <loc>http://localhost:1313/categories/</loc>
   </url><url>
-    <loc>https://jodin.org/tags/</loc>
+    <loc>http://localhost:1313/tags/</loc>
   </url>
 </urlset>
