@@ -28,7 +28,7 @@ import "poll"
 
 Cell:: struct {
 	// MUTEX //
-	mutex:                          sync.Mutex,
+	mutex:                   sync.Mutex,
 
 	// CELL CONTEXT //
 	cell_context:            runtime.Context,
@@ -237,7 +237,7 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	context = cell.cell_context
 	session: = cell.session
 
-	defer {
+	if session.print_source_on_error do defer {
 		if err != NOERR {
 			print_cell_content(cell)
 			print_cell_code(cell) } }
@@ -254,8 +254,8 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	if status == -1 do return session.error_handler(General_Error.Spawn_Error, "Could not execture odin build command.")
 	if ! os.exists(cell.dll_filepath) {
 		build_log, err: = os.read_entire_file_from_filename(build_log_filepath)
-		print_cell_content(cell)
-		print_cell_code(cell)
+		// print_cell_content(cell)
+		// print_cell_code(cell)
 		return session.error_handler(General_Error.Compiler_Error, string(build_log)) }
 	os.remove(build_log_filepath)
 

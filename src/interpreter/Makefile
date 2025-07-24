@@ -18,6 +18,7 @@ main:
 	mkdir $(JODIN_FOLDER)
 	cp -r * $(JODIN_FOLDER)
 	odin build . -out:../../$(OUT_FILENAME) -debug -max-error-count:8
+	# odin build . -out:$(OUT_FILENAME) -debug -max-error-count:8
 
 test:
 	odin build tests/test_server_client_connection -out:tests/test_server_client_connection$(EXTENSION)

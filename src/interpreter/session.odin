@@ -33,6 +33,10 @@ Procedure:: struct { name: string, type: string, value: string }
 
 // INTERPRETER SESSION //
 Session:: struct {
+	// FLAG //
+	print_source_on_error:          bool,
+	exit:                           bool,
+
 	// ERROR HANDLING PROC //
 	error_handler: proc(err: Error, msg: string = "", args: ..any, loc: runtime.Source_Code_Location = #caller_location) -> Error,
 
@@ -83,6 +87,7 @@ start_session:: proc(session: ^Session, error_handler: proc(err: Error, msg: str
 		err = os.Error(os.make_directory(session.session_temp_directory, TEMP_DIRECTORY_MODE))
 		if err != os.Error(os.General_Error.None) do return session.error_handler(err, "Couldn't create temp folder %s.", session.session_temp_directory) }
 	session_output_to_console(session)
+	session.print_source_on_error = slice.contains(os.args, "-print-source-on-error")
 	return NOERR }
 
 

@@ -273,7 +273,12 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	// PARSE DECLARATIONS //
 	// for decl_node, _ in pp.file.decls {
 	// 	fmt.printfln("%s%T:%s %s", ANSI_BOLD_BLUE, reflect.get_union_variant(decl_node.derived_stmt), ANSI_RESET, preprocess_node(&pp, decl_node)) }
-	DECLS: for decl_node, _ in pp.file.decls do #partial switch decl in decl_node.derived_stmt {
+	DECLS: for decl_node, _ in pp.file.decls {
+		node_string: = node_to_string(&pp, decl_node)
+		if node_string == "" do continue
+		// DICK
+		// fmt.printfln("decl [ %s ] %d", node_string, len(node_string))
+		#partial switch decl in decl_node.derived_stmt {
 		case ^ast.Value_Decl:
 			PREPROCESS_VALUE_DECL: {
 				type_string: string = ""
@@ -363,7 +368,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		case ^ast.Switch_Stmt:
 			fmt.sbprintln(&main_stmts, '\t', strings.concatenate({decl.partial ? "#partial " : "", preprocess_node(&pp, decl)}))
 		case:
-			return session.error_handler(General_Error.Preprocessor_Error, "Undandled declaration %s of type %T.", preprocess_node(&pp, decl_node), decl_node.derived_stmt) }
+			return session.error_handler(General_Error.Preprocessor_Error, "Undandled declaration %s of type %T.", preprocess_node(&pp, decl_node), decl_node.derived_stmt) } }
 
 	nl:: proc(sb: ^strings.Builder) { fmt.sbprintln(sb) }
 
@@ -421,6 +426,9 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 	for _, other_cell in cell.session.cells do if other_cell.loaded do for procedure in other_cell.global_procedures do fmt.sbprintf(&sb,
 		`%s = auto_cast __symmap__["%s"]` + NL, procedure.name, procedure.name)
 	fmt.sbprint(&sb, `}` + NL)
+
+	// EXIT PROC //
+	fmt.sbprint(&sb, `exit:: proc() { __cell__.session.exit = true }` + NL)
 
 	// GLOBAL CONSTANTS //
 	for _, other_cell in cell.session.cells do if other_cell.loaded do fmt.sbprintln(&sb, other_cell.global_constants_string)

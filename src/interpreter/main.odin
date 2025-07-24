@@ -46,49 +46,148 @@ INTERPRETER_LOG_PREFIX::         ANSI_GREEN + "[JodinInterpreter] " + ANSI_RESET
 INTERPRETER_ERROR_PREFIX::       ANSI_RED + "[JodinInterpreter] " + ANSI_RESET
 
 
-// main:: proc() {
-// 	data, ok: = os.read_entire_file_from_filename("../../examples/demo.ipynb")
-// 	assert(ok)
-// 	parser: = ipynb.make_parser(data)
-// 	notebook: = ipynb.make_notebook()
-// 	ipynb.parse_notebook(&parser, &notebook)
-// }
-
-
 main:: proc() {
-	context.allocator = reporting_allocator.wrap_allocator(
-		wrapped_allocator=context.allocator,
-		report_alloc_error=report_alloc_error,
-		allocator_allocator=runtime.heap_allocator())
-	fmt.println(INTERPRETER_LOG_PREFIX, "jodin: ", "Version: ", VERSION, sep = "")
-	session: ^Session = new(Session)
-	start_session(session, error_handler)
-	defer end_session(session)
-	err: = connect_to_ipy_kernel(session)
-	if err != NOERR { session.error_handler(err, "Could not connect to jodin kernel."); return }
-	counter: uint = 1
-	for {
-		defer { counter += 1 }
-		session_output_to_console(session)
-		response, _ := strings.builder_make_len_cap(0, CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
-		frontend_cell_id, code_raw, _: = receive_message(session)
-		session_output_to_frontend(session)
-		cell_stdout, cell_stderr, cell_iopub: string
-		if slice.contains([]string{"exit", "quit"}, code_raw) do break
-		cell: ^Cell
-		if frontend_cell_id not_in session.cells do cell, err = compile_new_cell(session, frontend_cell_id, code_raw, counter)
-		else do cell, err = recompile_cell(session, frontend_cell_id, code_raw)
-		os.flush(os.stdout)
-		if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
-		session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
-		session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
-		fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")
-		fmt.sbprintln(&response, ANSI_RED, session_stderr, cell_stderr, ANSI_RESET, sep = "")
-		err = external_pipe.write_string(&session.kernel_stdout_pipe, string_or_newline(strings.to_string(response)), external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
-		assert(err == NOERR)
-		if len(cell_iopub) > 0 {
-			external_pipe.write_bytes(&session.kernel_iopub_pipe, transmute([]u8)cell_iopub, external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
-			assert(err == NOERR) }
-		err = external_pipe.write_bytes(&session.kernel_iopub_pipe, make_empty_message(), external_pipe.DEFAULT_TIMEOUT, external_pipe.DEFAULT_DELAY)
-		assert(err == NOERR) } }
+	subcommand: string = (len(os.args) == 1) ? "" : (os.args[1][0] == '-') ? "" : os.args[1]
+	if subcommand != "" {
+		switch subcommand {
+		case "help":
+			fmt.println(HELP_STRING)
+		case "version":
+			fmt.println("Version", VERSION)
+		case "server":
+			context.allocator = reporting_allocator.wrap_allocator(
+				wrapped_allocator=context.allocator,
+				report_alloc_error=report_alloc_error,
+				allocator_allocator=runtime.heap_allocator())
+			fmt.println(
+				INTERPRETER_LOG_PREFIX,
+				"Jodin: ",
+				"Version: ",
+				VERSION,
+				sep = "")
+			session: ^Session = new(Session)
+			start_session(
+				session,
+				error_handler)
+			defer end_session(session)
+			err: = connect_to_ipy_kernel(session)
+			if err != NOERR {
+				session.error_handler(
+					err,
+					"Could not connect to Jodin kernel.")
+				return }
+			counter: uint = 1
+			for {
+				defer { counter += 1 }
+				session_output_to_console(session)
+				response, _ := strings.builder_make_len_cap(
+					0,
+					CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
+				frontend_cell_id, code_raw, _: = receive_message(session)
+				session_output_to_frontend(session)
+				cell_stdout, cell_stderr, cell_iopub: string
+				cell: ^Cell
+				if frontend_cell_id not_in session.cells do cell, err = compile_new_cell(
+					session,
+					frontend_cell_id,
+					code_raw,
+					counter)
+				else do cell, err = recompile_cell(
+					session,
+					frontend_cell_id,
+					code_raw)
+				os.flush(os.stdout)
+				if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
+				session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
+				session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
+				fmt.sbprint(
+					&response,
+					ANSI_RESET,
+					session_stdout,
+					cell_stdout,
+					sep = "")
+				fmt.sbprintln(
+					&response,
+					ANSI_RED,
+					session_stderr,
+					cell_stderr,
+					ANSI_RESET,
+					sep = "")
+				err = external_pipe.write_string(
+					&session.kernel_stdout_pipe,
+					string_or_newline(strings.to_string(response)),
+					external_pipe.DEFAULT_TIMEOUT,
+					external_pipe.DEFAULT_DELAY)
+				assert(err == NOERR)
+				if len(cell_iopub) > 0 {
+					external_pipe.write_bytes(
+						&session.kernel_iopub_pipe,
+						transmute([]u8)cell_iopub,
+						external_pipe.DEFAULT_TIMEOUT,
+						external_pipe.DEFAULT_DELAY)
+					assert(err == NOERR) }
+				err = external_pipe.write_bytes(
+					&session.kernel_iopub_pipe,
+					make_empty_message(),
+					external_pipe.DEFAULT_TIMEOUT,
+					external_pipe.DEFAULT_DELAY)
+				assert(err == NOERR)
+				if session.exit do break }
+		case:
+			fmt.println(
+				INTERPRETER_ERROR_PREFIX + "Invalid subcommand",
+				os.args[1]) } }
+	else {
+		fmt.println(
+			INTERPRETER_LOG_PREFIX,
+			"Jodin: ",
+			"Version: ",
+			VERSION,
+			sep = "")
+		session: ^Session = new(Session)
+		start_session(
+			session,
+			error_handler)
+		defer end_session(session)
+		counter: uint = 1
+		for {
+			defer { counter += 1 }
+			response, _: = strings.builder_make_len_cap(
+				0,
+				CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
+			code_builder, _: = strings.builder_make_len_cap(
+				0,
+				10_000)
+			fmt.printf(ANSI_BOLD_GREEN + "In [%d]: " + ANSI_RESET, counter)
+			for {
+				line: []u8 = make(
+					[]u8,
+					1_000)
+				total_read,_: = os.read(
+					os.stdin,
+					line)
+				if total_read == 0 do break
+				line_trimmed: = strings.trim_right(
+					string(line[0:total_read]),
+					"\n\r")
+				fmt.sbprint(
+					&code_builder,
+					line_trimmed)
+				if len(line_trimmed) == 0 do break
+				if line_trimmed[len(line_trimmed)-1] != '\\' do break }
+			cell_stdout, cell_stderr, cell_iopub: string
+			code_raw: = strings.to_string(code_builder)
+			frontend_cell_id: = fmt.aprint(counter)
+			assert(frontend_cell_id not_in session.cells)
+			cell, err: = compile_new_cell(session,
+				frontend_cell_id,
+				code_raw,
+				counter)
+			if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
+			session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
+			session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
+			fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")
+			fmt.sbprintln(&response, ANSI_RED, session_stderr, cell_stderr, ANSI_RESET, sep = "")
+			fmt.println(strings.to_string(response))
+			if session.exit do break } } }
 

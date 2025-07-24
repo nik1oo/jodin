@@ -17,13 +17,13 @@ main:
 	@echo [Make] Compiling interpreter...
 	make -C ./src/interpreter/
 	@echo [Make] Compiling kernel...
-	poetry --directory=./src/ipy_kernel install --compile
+	poetry --directory=./src/python_kernel install --compile
 	@echo [Make] Installing kernel...
-	poetry --directory=./src/ipy_kernel run jupyter kernelspec install ./src/jodin --name=jodin --user
+	poetry --directory=./src/python_kernel run jupyter kernelspec install ./src/jodin --name=jodin --user
 	@echo [Make] Running notebook...
 	# jupyter server
-	# poetry -C=./src/ipy_kernel run jupyter notebook ../../../notebooks/numerical_optimization.ipynb
-	poetry -C=./src/ipy_kernel run jupyter notebook ../../../notebooks/numerical_optimization.ipynb
+	# poetry -C=./src/python_kernel run jupyter notebook ../../../notebooks/numerical_optimization.ipynb
+	poetry -C=./src/python_kernel run jupyter notebook ../../../notebooks/numerical_optimization.ipynb
 
 
 test_notebooks:
@@ -32,8 +32,8 @@ test_notebooks:
 
 test_interpreter:
 	clear
-	poetry --directory=./src/ipy_kernel run pip install .
-	poetry --directory=./src/ipy_kernel run pip install pytest
+	poetry --directory=./src/python_kernel run pip install .
+	poetry --directory=./src/python_kernel run pip install pytest
 	make -C ./src/interpreter/ test -B
-	make -C ./src/ipy_kernel/ test -B
+	make -C ./src/python_kernel/ test -B
 
