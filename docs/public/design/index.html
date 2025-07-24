@@ -4,8 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Categories</title>
-    <link rel="alternate" type="application/rss+xml" href="http://localhost:1313/jodin/categories/index.xml" title="JODIN" />
+    <title>Design</title>
     <link rel="stylesheet" href="/jodin/css/style.css">
     <link rel="stylesheet" href="/jodin/css/fonts.css">
     <link defer rel="stylesheet" href="/jodin/css/syntax.css">
@@ -25,47 +24,26 @@
     </section>
 </header>
 
-<section id="content" class="page-content">
-    <table>
-        
-        <tr>
-            <td class="post-date-time date-time-font">
-                <time>2025-07-23</time>
-            </td>
-            <td class="post">
-                <a href="http://localhost:1313/jodin/design/">Design</a>
-            </td>
-        </tr>
-        
-        <tr>
-            <td class="post-date-time date-time-font">
-                <time>2025-07-02</time>
-            </td>
-            <td class="post">
-                <a href="http://localhost:1313/jodin/guide/">Guide</a>
-            </td>
-        </tr>
-        
-        <tr>
-            <td class="post-date-time date-time-font">
-                <time>2025-07-02</time>
-            </td>
-            <td class="post">
-                <a href="http://localhost:1313/jodin/api_reference/">Reference</a>
-            </td>
-        </tr>
-        
-        <tr>
-            <td class="post-date-time date-time-font">
-                <time>2025-07-02</time>
-            </td>
-            <td class="post">
-                <a href="http://localhost:1313/jodin/installation/">Installation</a>
-            </td>
-        </tr>
-        
-    </table>
+<section id="post">
+
+    <h1 id="post-title">Design</h1>
+    <time>
+        2025-07-23
+    </time>
+    <hr />
+    <div id="post-content">
+        <p><img src="../diagram.png" alt="design-diagram"></p>
+<h2 id="cell">Cell</h2>
+<p>Compiled by <em>Odin</em>, loaded and executed by the <em>Interpreter</em> in its own thread. Sends responses to the <em>Interpreter</em> by named pipes.</p>
+<h2 id="interpreter">Interpreter</h2>
+<p>Receives commands from the <em>Kernel</em>. Creates, executes, and deletes <em>Cells</em>, and forwards their responses to the <em>Frontend</em>.</p>
+<h2 id="frontend">Frontend</h2>
+<p>GUI for writing notebooks. Communicates with the <em>Interpreter</em> using ZeroMQ messaging protocol.</p>
+
+    </div>
 </section>
+
+
 
 <footer id="greybeard">
 </footer></body>

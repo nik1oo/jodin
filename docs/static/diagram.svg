@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="402.46301"
+   height="353.64499"
+   viewBox="0 0 402.46302 353.64499"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   sodipodi:docname="diagram.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="164.04877"
+     inkscape:cy="218.496"
+     inkscape:window-width="1920"
+     inkscape:window-height="1057"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath54">
+      <path
+         id="path54"
+         style="stroke-width:0.0999999;stroke-linecap:square;paint-order:markers fill stroke;stop-color:#000000"
+         d="m 1691.1994,-792.32001 h 1634.8919 v 92.82806 H 1691.1994 Z" />
+    </clipPath>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-345.73941,-85.881882)">
+    <rect
+       style="fill:#004dfa;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1;stroke-dasharray:none"
+       id="rect2"
+       width="158.19048"
+       height="32.664181"
+       x="369.39322"
+       y="111.46649"
+       rx="16.33209"
+       ry="16.33209" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.6667px;line-height:22.5501px;font-family:Arial;-inkscape-font-specification:Arial;text-align:justify;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.33417;stroke-opacity:1"
+       x="387.10333"
+       y="132.90318"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         x="387.10333"
+         y="132.90318"
+         style="font-weight:bold;fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1">Jupyter Frontend</tspan></text>
+    <rect
+       style="fill:#004dfa;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3"
+       width="158.19048"
+       height="32.664181"
+       x="562.52692"
+       y="111.46649"
+       rx="16.33209"
+       ry="16.33209" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.6667px;line-height:22.5501px;font-family:Arial;-inkscape-font-specification:Arial;text-align:justify;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.33417;stroke-opacity:1"
+       x="584.22375"
+       y="132.9032"
+       id="text3"><tspan
+         sodipodi:role="line"
+         id="tspan3"
+         x="584.22375"
+         y="132.9032"
+         style="font-weight:bold;fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1">JODIN Frontend</tspan></text>
+    <rect
+       style="fill:#c40058;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1;stroke-dasharray:none"
+       id="rect4"
+       width="158.19048"
+       height="32.664181"
+       x="369.39322"
+       y="201.38881"
+       rx="16.33209"
+       ry="16.33209" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.6667px;line-height:22.5501px;font-family:Arial;-inkscape-font-specification:Arial;text-align:justify;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.33417;stroke-opacity:1"
+       x="395.96268"
+       y="222.8255"
+       id="text4"><tspan
+         sodipodi:role="line"
+         id="tspan4"
+         x="395.96268"
+         y="222.8255"
+         style="font-weight:bold;fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1">Python Kernel</tspan></text>
+    <rect
+       style="fill:#c40058;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1;stroke-dasharray:none"
+       id="rect5"
+       width="158.19048"
+       height="32.664181"
+       x="562.52692"
+       y="201.38881"
+       rx="16.33209"
+       ry="16.33209" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.6667px;line-height:22.5501px;font-family:Arial;-inkscape-font-specification:Arial;text-align:justify;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.33417;stroke-opacity:1"
+       x="599.28461"
+       y="222.8255"
+       id="text5"><tspan
+         sodipodi:role="line"
+         id="tspan5"
+         x="599.28461"
+         y="222.8255"
+         style="font-weight:bold;fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1">Odin Kernel</tspan></text>
+    <rect
+       style="fill:#772cfd;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1;stroke-dasharray:none"
+       id="rect6"
+       width="158.66447"
+       height="32.664185"
+       x="467.99359"
+       y="293.74744"
+       rx="16.332092"
+       ry="16.110609" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.6667px;line-height:22.5501px;font-family:Arial;-inkscape-font-specification:Arial;text-align:justify;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.33417;stroke-opacity:1"
+       x="509.36224"
+       y="315.18414"
+       id="text6"><tspan
+         sodipodi:role="line"
+         id="tspan6"
+         x="509.36224"
+         y="315.18414"
+         style="font-weight:bold;fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1">Interpreter</tspan></text>
+    <rect
+       style="fill:#008a80;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1;stroke-dasharray:none"
+       id="rect8"
+       width="158.66447"
+       height="32.664185"
+       x="562.93884"
+       y="382.44696"
+       rx="16.332092"
+       ry="16.110609" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.6667px;line-height:22.5501px;font-family:Arial;-inkscape-font-specification:Arial;text-align:justify;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.33417;stroke-opacity:1"
+       x="626.85968"
+       y="403.88367"
+       id="text8"><tspan
+         sodipodi:role="line"
+         id="tspan8"
+         x="626.85968"
+         y="403.88367"
+         style="font-weight:bold;fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1">Cell</tspan></text>
+    <rect
+       style="fill:#008a80;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1;stroke-dasharray:none"
+       id="rect9"
+       width="158.66447"
+       height="32.664185"
+       x="369.14066"
+       y="382.44696"
+       rx="16.332092"
+       ry="16.110609" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.6667px;line-height:22.5501px;font-family:Arial;-inkscape-font-specification:Arial;text-align:justify;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.33417;stroke-opacity:1"
+       x="433.06149"
+       y="403.88367"
+       id="text9"><tspan
+         sodipodi:role="line"
+         id="tspan9"
+         x="433.06149"
+         y="403.88367"
+         style="font-weight:bold;fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1">Cell</tspan></text>
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1;stroke-dasharray:none"
+       d="m 472.20652,382.44696 c 0.56383,-28.01767 53.37754,-27.90552 53.8205,-56.03534"
+       id="path10"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="m 620.0271,382.44696 c -0.56383,-28.01767 -53.37754,-27.90552 -53.8205,-56.03534"
+       id="path11"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="m 526.15202,293.74744 c -0.56383,-28.01767 -53.62754,-31.56463 -54.0705,-59.69445"
+       id="path13"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="m 565.95652,293.74744 c 0.56383,-28.01767 53.62754,-31.56463 54.0705,-59.69445"
+       id="path14"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="M 658.52702,201.38881 V 144.13067"
+       id="path15"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="M 433.33152,201.38881 V 144.13067"
+       id="path16"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="M 620.02702,201.38881 C 619.46319,173.37114 472.52448,172.26049 472.08152,144.13067"
+       id="path38"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="m 472.08144,201.38881 c 0.56383,-28.01767 147.50254,-29.12832 147.9455,-57.25814"
+       id="path39"
+       sodipodi:nodetypes="cc" />
+  </g>
+</svg>

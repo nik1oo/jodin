@@ -6,8 +6,15 @@
     <description>Recent content on JODIN</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 02 Jul 2025 16:23:07 +0300</lastBuildDate>
+    <lastBuildDate>Wed, 23 Jul 2025 15:13:58 +0300</lastBuildDate>
     <atom:link href="http://localhost:1313/jodin/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Design</title>
+      <link>http://localhost:1313/jodin/design/</link>
+      <pubDate>Wed, 23 Jul 2025 15:13:58 +0300</pubDate>
+      <guid>http://localhost:1313/jodin/design/</guid>
+      <description>&lt;p&gt;&lt;img src=&#34;../diagram.png&#34; alt=&#34;design-diagram&#34;&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;cell&#34;&gt;Cell&lt;/h2&gt;&#xA;&lt;p&gt;Compiled by &lt;em&gt;Odin&lt;/em&gt;, loaded and executed by the &lt;em&gt;Interpreter&lt;/em&gt; in its own thread. Sends responses to the &lt;em&gt;Interpreter&lt;/em&gt; by named pipes.&lt;/p&gt;&#xA;&lt;h2 id=&#34;interpreter&#34;&gt;Interpreter&lt;/h2&gt;&#xA;&lt;p&gt;Receives commands from the &lt;em&gt;Kernel&lt;/em&gt;. Creates, executes, and deletes &lt;em&gt;Cells&lt;/em&gt;, and forwards their responses to the &lt;em&gt;Frontend&lt;/em&gt;.&lt;/p&gt;&#xA;&lt;h2 id=&#34;frontend&#34;&gt;Frontend&lt;/h2&gt;&#xA;&lt;p&gt;GUI for writing notebooks. Communicates with the &lt;em&gt;Interpreter&lt;/em&gt; using ZeroMQ messaging protocol.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Guide</title>
       <link>http://localhost:1313/jodin/guide/</link>
@@ -16,7 +23,7 @@
       <description>&lt;p&gt;Typically when you execute a cell the kernel will wait for the cell thread to finish before displaying its output and allowing you to execute another cell. This is &lt;em&gt;synchronous execution&lt;/em&gt; and it is the default. Jodin also supports &lt;em&gt;asynchronous execution&lt;/em&gt; where you can execute a cell and leave its thread running for as long as it wants to or until you terminate it from another cell.&lt;/p&gt;&#xA;&lt;p&gt;To make a cell execute asynchronously, add the &lt;code&gt;#+async&lt;/code&gt; directive at the top. To prevent race-conditions, this cell won&amp;rsquo;t be allowed to access external variables in its root scope, and any variables declared there will not be exported to other cells.&lt;/p&gt;</description>
     </item>
     <item>
-      <title>Reference</title>
+      <title>Package API</title>
       <link>http://localhost:1313/jodin/api_reference/</link>
       <pubDate>Wed, 02 Jul 2025 15:13:58 +0300</pubDate>
       <guid>http://localhost:1313/jodin/api_reference/</guid>
