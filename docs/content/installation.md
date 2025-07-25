@@ -1,55 +1,46 @@
 +++
 date = '2025-07-02T03:25:54+03:00'
 draft = false
-title = 'Installation'
+title = 'Setup'
 +++
 
 ## Requirements
 
-- Make installed.
-- Odin version >=dev-2025-02, <=dev-2025-06 installed.
-- Python version >=3.12 installed.
-- Jupyter installed.
-- Poetry installed.
+- Odin latest version
+- Python version >=3.12
+- Jupyter
+- Python Poetry (for the Python kernel only)
 
 ## Installing
 
-**1.** Compile the JODIN interpreter and install the JODIN package.
+To install JODIN execute:
 
 ```
-make -C ./src/interpreter/
+git clone https://github.com/nik1oo/jodin.git
+cd jodin
+./bjodin install
 ```
 
-**2.** Add JODIN directory to PATH.
-
-**3.** Activate the virtual environment by executing the command printed by the following command.
+To start the virtual environment execute:
 
 ```
-poetry --directory=./src/ipy_kernel env activate
-```
-
-**4.** Install the dependencies.
-
-```
-poetry --directory=./src/ipy_kernel install --compile
-```
-
-**5.** Tnstall the JODIN kernel.
-
-```
-poetry --directory=./src/ipy_kernel run jupyter kernelspec install ./src/jodin --name=jodin --user
+bjodin venv
 ```
 
 ## Running
 
 To start the console front-end execute the following command:
 
-```
-poetry -C=./src/ipy_kernel run jupyter console --kernel jodin
-```
-
-To start the notebook front-end execute the following command, then select the JODIN kernel from _Kernel_ > _Change Kernel_.
+To start JODIN with the Jupyter console front-end execute:
 
 ```
-poetry -C=./src/ipy_kernel run jupyter notebook ../../examples/demo.ipynb
+jodin jupyter-console
 ```
+
+To start JODIN with the Jupyter notebook front-end execute:
+
+```
+jodin jupyter-notebook
+```
+
+If the JODIN kernel is not selected, you can select it from _Kernel_ > _Change Kernel_.

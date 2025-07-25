@@ -4,7 +4,9 @@ JODIN: Interactive/live programming environment for Odin.
 Usage:
 	jodin [subcommand] [options]
 Subcommands:
-	server                    Start the interpreter in server mode, allowing the JODIN kernel to connect to it.
+	jupyter-console           Start JODIN with the Jupyter console front-end.
+	jupyter-notebook          Start JODIN with the Jupyter notebook front-end.
+	server                    Start the JODIN interpreter in server mode, allowing the JODIN kernel to connect to it.
 	help                      Print the help text.
 	version                   Print version.
 Options:

@@ -1,12 +1,14 @@
 <p align="center">
-<!---	<picture>
+	<picture>
 		<source media="(prefers-color-scheme: light)" srcset="/docs/logo.png">
 		<img alt="jodin logo" src="/docs/logo-night.png" width="128px" height="128px">
-	</picture>--->
+	</picture>
 	<h1 align="center"><b>JODIN</b></h1>
 </p>
 
-A ptototype of an environment for interactive and live programming in Odin. A REPL interpreter and a Jupyter kernel.
+An environment for interactive and live programming in Odin. A REPL interpreter and a Jupyter kernel.
+- REPL interpreter for Odin
+- Jupyter kernel for Odin
 
 > [!WARNING]
 > Only works on Windows. There are some bugs. It's a prototype.

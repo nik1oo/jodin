@@ -23,6 +23,7 @@ img {
 
 h2 {
     color: #FF7357;
+    color: orange;
 }
 
 
@@ -260,7 +261,7 @@ header {
 }
 
 #post time {
-    color: #A84034;
+    color: orange;
     font-size: 1.3rem;
     font-weight: bold;
 }

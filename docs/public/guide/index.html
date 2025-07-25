@@ -32,26 +32,39 @@
     </time>
     <hr />
     <div id="post-content">
-        <p>Typically when you execute a cell the kernel will wait for the cell thread to finish before displaying its output and allowing you to execute another cell. This is <em>synchronous execution</em> and it is the default. Jodin also supports <em>asynchronous execution</em> where you can execute a cell and leave its thread running for as long as it wants to or until you terminate it from another cell.</p>
-<p>To make a cell execute asynchronously, add the <code>#+async</code> directive at the top. To prevent race-conditions, this cell won&rsquo;t be allowed to access external variables in its root scope, and any variables declared there will not be exported to other cells.</p>
-<pre tabindex="0"><code>#+async
-…
-</code></pre><p>In order for this cell to interact with other cells, you need to declare at least one scope with the <code>sync</code> label.</p>
-<pre tabindex="0"><code>#+async
-…
-sync: {
-	…
-}
-…
-</code></pre><p>Every Jodin session has a <code>Ticket_Mutex</code> called <code>__data_mutex__</code>, which is acquired at the beginning of the cell and released at the end, to allow the synchonous cells to share the same memory as asynchronous cells. In asynchronous cells the <code>__data_mutex__</code> is acquired at the beginning of every <code>sync</code> scope and released at it&rsquo;s end.</p>
-<p>So if an asynchronous cell with a <code>sync</code> loop is running, and you execute a synchronous cell, the asynchronous cell will halt at the end of the current iteration until the synchronous cell is executed.</p>
+        <h2 id="live-coding">Live Coding</h2>
+<p>Each cell is executed in a separate thread. To prevent data races, the shared resources are guarded by a mutex. This mutex is acquired and released automatically, so you don&rsquo;t have to think about it. In JODIN there are 3 different kinds of cells: <em>regular cell</em>, <em>looping cell</em>, and <em>composite cell</em>. To do live coding, you have to use <em>looping cells</em> or <em>composite cells</em>.</p>
 <hr>
-<h2 id="examples">Examples</h2>
-<p>There are several notebooks in the <code>examples</code> folder of the Jodin repository which show how this feature can be used for live coding.</p>
-<ul>
-<li>The <code>glfw.ipynb</code> notebook shows how you can update the contents of a GLFW window live.</li>
-<li>The <code>miniaudio.ipynb</code> notebook shows how you can live-program sound.</li>
+<p><img src="../regular-cell.png" alt="regular cell"></p>
+<h3 id="regular-cell">Regular Cell</h3>
+<pre tabindex="0"><code>…
+</code></pre><ul>
+<li>The cell&rsquo;s contents are executed once.</li>
+<li>The mutex is acquired at the start of execution and released at the end.</li>
 </ul>
+<hr>
+<p><img src="../looping-cell.png" alt="looping cell"></p>
+<h3 id="looping-cell">Looping Cell</h3>
+<pre tabindex="0"><code>#+loop
+…
+</code></pre><ul>
+<li>The cell&rsquo;s contents are executed repeatedly until a <code>break main</code> statement is executed.</li>
+<li>The mutex is acquired at the start of every successive execution and released at the end.</li>
+<li>If another cell requests to acquire the mutex while this cell is executing, it can do so at the end of current iteration ends.</li>
+</ul>
+<hr>
+<p><img src="../composite-cell.png" alt="composite cell"></p>
+<h3 id="composite-cell">Composite Cell</h3>
+<pre tabindex="0"><code>…
+loop: { … }
+…
+</code></pre><ul>
+<li>The cell&rsquo;s contents are executed once.</li>
+<li>A mutex scope is inserted before and after every scope labeled as <code>loop</code>.</li>
+<li>A mutex scope is inserted inside every scope labeled as <code>loop</code>.</li>
+<li>If another cell requests to acquire the mutex while this cell is executing, it can do so at the beginning or end of one of the <code>loop</code> scopes.</li>
+</ul>
+<hr>
 
     </div>
 </section>

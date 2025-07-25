@@ -4,35 +4,53 @@ draft = false
 title = 'Guide'
 +++
 
-Typically when you execute a cell the kernel will wait for the cell thread to finish before displaying its output and allowing you to execute another cell. This is _synchronous execution_ and it is the default. Jodin also supports _asynchronous execution_ where you can execute a cell and leave its thread running for as long as it wants to or until you terminate it from another cell.
+## Live Coding
 
-To make a cell execute asynchronously, add the `#+async` directive at the top. To prevent race-conditions, this cell won't be allowed to access external variables in its root scope, and any variables declared there will not be exported to other cells.
-
-```
-#+async
-…
-```
-
-In order for this cell to interact with other cells, you need to declare at least one scope with the `sync` label.
-
-```
-#+async
-…
-sync: {
-	…
-}
-…
-```
-
-Every Jodin session has a `Ticket_Mutex` called `__data_mutex__`, which is acquired at the beginning of the cell and released at the end, to allow the synchonous cells to share the same memory as asynchronous cells. In asynchronous cells the `__data_mutex__` is acquired at the beginning of every `sync` scope and released at it's end.
-
-So if an asynchronous cell with a `sync` loop is running, and you execute a synchronous cell, the asynchronous cell will halt at the end of the current iteration until the synchronous cell is executed.
+Each cell is executed in a separate thread. To prevent data races, the shared resources are guarded by a mutex. This mutex is acquired and released automatically, so you don't have to think about it. In JODIN there are 3 different kinds of cells: _regular cell_, _looping cell_, and _composite cell_. To do live coding, you have to use _looping cells_ or _composite cells_.
 
 ---
 
-## Examples
+![regular cell](../regular-cell.png)
 
-There are several notebooks in the `examples` folder of the Jodin repository which show how this feature can be used for live coding.
+### Regular Cell
 
-- The `glfw.ipynb` notebook shows how you can update the contents of a GLFW window live.
-- The `miniaudio.ipynb` notebook shows how you can live-program sound.
+```
+…
+```
+
+- The cell's contents are executed once.
+- The mutex is acquired at the start of execution and released at the end.
+
+---
+
+![looping cell](../looping-cell.png)
+
+### Looping Cell
+
+```
+#+loop
+…
+```
+
+- The cell's contents are executed repeatedly until a `break main` statement is executed.
+- The mutex is acquired at the start of every successive execution and released at the end.
+- If another cell requests to acquire the mutex while this cell is executing, it can do so at the end of current iteration ends.
+
+---
+
+![composite cell](../composite-cell.png)
+
+### Composite Cell
+
+```
+…
+loop: { … }
+…
+```
+
+- The cell's contents are executed once.
+- A mutex scope is inserted before and after every scope labeled as `loop`.
+- A mutex scope is inserted inside every scope labeled as `loop`.
+- If another cell requests to acquire the mutex while this cell is executing, it can do so at the beginning or end of one of the `loop` scopes.
+
+---

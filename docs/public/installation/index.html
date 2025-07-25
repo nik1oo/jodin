@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Installation</title>
+    <title>Setup</title>
     <link rel="stylesheet" href="/jodin/css/style.css">
     <link rel="stylesheet" href="/jodin/css/fonts.css">
     <link defer rel="stylesheet" href="/jodin/css/syntax.css">
@@ -26,7 +26,7 @@
 
 <section id="post">
 
-    <h1 id="post-title">Installation</h1>
+    <h1 id="post-title">Setup</h1>
     <time>
         2025-07-02
     </time>
@@ -34,28 +34,26 @@
     <div id="post-content">
         <h2 id="requirements">Requirements</h2>
 <ul>
-<li>Make installed.</li>
-<li>Odin version &gt;=dev-2025-02, &lt;=dev-2025-06 installed.</li>
-<li>Python version &gt;=3.12 installed.</li>
-<li>Jupyter installed.</li>
-<li>Poetry installed.</li>
+<li>Odin latest version</li>
+<li>Python version &gt;=3.12</li>
+<li>Jupyter</li>
+<li>Python Poetry (for the Python kernel only)</li>
 </ul>
 <h2 id="installing">Installing</h2>
-<p><strong>1.</strong> Compile the JODIN interpreter and install the JODIN package.</p>
-<pre tabindex="0"><code>make -C ./src/interpreter/
-</code></pre><p><strong>2.</strong> Add JODIN directory to PATH.</p>
-<p><strong>3.</strong> Activate the virtual environment by executing the command printed by the following command.</p>
-<pre tabindex="0"><code>poetry --directory=./src/ipy_kernel env activate
-</code></pre><p><strong>4.</strong> Install the dependencies.</p>
-<pre tabindex="0"><code>poetry --directory=./src/ipy_kernel install --compile
-</code></pre><p><strong>5.</strong> Tnstall the JODIN kernel.</p>
-<pre tabindex="0"><code>poetry --directory=./src/ipy_kernel run jupyter kernelspec install ./src/jodin --name=jodin --user
+<p>To install JODIN execute:</p>
+<pre tabindex="0"><code>git clone https://github.com/nik1oo/jodin.git
+cd jodin
+./bjodin install
+</code></pre><p>To start the virtual environment execute:</p>
+<pre tabindex="0"><code>bjodin venv
 </code></pre><h2 id="running">Running</h2>
 <p>To start the console front-end execute the following command:</p>
-<pre tabindex="0"><code>poetry -C=./src/ipy_kernel run jupyter console --kernel jodin
-</code></pre><p>To start the notebook front-end execute the following command, then select the JODIN kernel from <em>Kernel</em> &gt; <em>Change Kernel</em>.</p>
-<pre tabindex="0"><code>poetry -C=./src/ipy_kernel run jupyter notebook ../../examples/demo.ipynb
-</code></pre>
+<p>To start JODIN with the Jupyter console front-end execute:</p>
+<pre tabindex="0"><code>jodin jupyter-console
+</code></pre><p>To start JODIN with the Jupyter notebook front-end execute:</p>
+<pre tabindex="0"><code>jodin jupyter-notebook
+</code></pre><p>If the JODIN kernel is not selected, you can select it from <em>Kernel</em> &gt; <em>Change Kernel</em>.</p>
+
     </div>
 </section>
 
