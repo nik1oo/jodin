@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:dynlib"
 import "core:strings"
 import "core:os"
+import "core:os/os2"
 import "core:mem"
 import "core:c/libc"
 import "core:odin/parser"
@@ -48,12 +49,56 @@ INTERPRETER_ERROR_PREFIX::       ANSI_RED + "[JodinInterpreter] " + ANSI_RESET
 
 main:: proc() {
 	subcommand: string = (len(os.args) == 1) ? "" : (os.args[1][0] == '-') ? "" : os.args[1]
+	working_dir, _: = os2.join_path({os.get_current_directory(), `src`, `python_kernel`}, context.allocator)
+	notebook_dir: string = (ODIN_OS == .Windows) ? "/c" : "/"
+	if len(os.args) > 2 do for arg in os.args[2:] {
+		if strings.starts_with(arg, `-notebook-dir`) {
+			notebook_dir = strings.split(arg, "=")[1] } }
 	if subcommand != "" {
 		switch subcommand {
 		case "help":
 			fmt.println(HELP_STRING)
 		case "version":
 			fmt.println("Version", VERSION)
+		case "jupyter-console":
+			libc.system(`poetry --directory=./src/python_kernel run jupyter console  --kernel jodin`)
+			// state, stdout, stderr, err: = os2.process_exec(
+			// 	desc=os2.Process_Desc{
+			// 		command={`poetry`, `env`, `info`, `-p`}, working_dir=working_dir },
+			// 	allocator=context.allocator)
+			// venv_path: = string(stdout)
+			// jupyter_console, _: = os2.join_path({ strings.trim_right(string(venv_path), "\n\r"), "Scripts", "jupyter-console.exe" }, context.allocator)
+			// sep: []u8 = {os2.Path_Separator}
+			// path_list: = strings.split(jupyter_console, string(sep))
+			// fmt.println(path_list)
+			// jupyter_console, _ = strings.join(path_list[2:], string(sep))
+			// fmt.println(jupyter_console)
+			// command: []string = {fmt.aprintf(`"%s"`, jupyter_console), `--kernel jodin`}
+			// fmt.println(strings.join(command, sep=" "))
+			// state, stdout, stderr, err = os2.process_exec(
+			// 	{command=command, working_dir=working_dir},
+			// 	allocator=context.allocator)
+			// state, stdout, stderr, err = os2.process_exec(
+			// 	{command={`poetry`, `run`, `jupyter`, `console`}, working_dir=working_dir},
+			// 	allocator=context.allocator)
+			// fmt.println(string(stdout), string(stderr))
+		case "jupyter-notebook":
+			// fmt.println(os2.stdout)
+			libc.system(fmt.caprintf(`poetry --directory=./src/python_kernel run jupyter notebook --notebook-dir=%s`, notebook_dir))
+			// process, err: = os2.process_start(
+			// 	{command={`poetry`, `run`, `jupyter`, `notebook`}, working_dir=working_dir, stdout=os2.stdout})
+			// for {
+			// 	process_state, wait_err: = os2.process_wait(process, 1_000_000)
+			// 	p: [100_000]u8
+			// 	n, err: = io.read(os2.stdout.stream, p[:])
+			// 	fmt.println(p[0:n])
+			// 	os2.flush(os2.stdout)
+			// 	if process_state.exited do break }
+			// fmt.println(process, err)
+			// state, stdout, stderr, err: = os2.process_exec(
+			// 	{command={`poetry`, `run`, `jupyter`, `notebook`}, working_dir=working_dir},
+			// 	allocator=context.allocator)
+			// fmt.println(string(stdout), string(stderr))
 		case "server":
 			context.allocator = reporting_allocator.wrap_allocator(
 				wrapped_allocator=context.allocator,

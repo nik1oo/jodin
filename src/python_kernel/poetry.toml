@@ -1,6 +1,9 @@
+# cache-dir = "../../cache"
+
 [virtualenvs]
 create = true
 use-poetry-python = true
+in-project = false
 
 [virtualenvs.options]
 no-pip = true

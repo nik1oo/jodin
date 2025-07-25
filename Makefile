@@ -1,29 +1,8 @@
 
 
-ifeq ($(OS),Windows_NT)
-    PYTHON := python
-else
-    UNAME_S := $(shell uname -s)
-    ifeq ($(UNAME_S),Linux)
-        PYTHON := python3
-    else
-        PYTHON := python3
-    endif
-endif
-
-
-#main:
-#	clear
-#	@echo [Make] Compiling interpreter...
-#	make -C ./src/interpreter/
-#	@echo [Make] Compiling kernel...
-#	poetry --directory=./src/python_kernel install --compile
-#	@echo [Make] Installing kernel...
-#	poetry --directory=./src/python_kernel run jupyter kernelspec install ./src/jodin --name=jodin --user
-#	@echo [Make] Running notebook...
-#	# jupyter server
-#	# poetry -C=./src/python_kernel run jupyter notebook ../../../notebooks/numerical_optimization.ipynb
-#	poetry -C=./src/python_kernel run jupyter notebook ../../../notebooks/numerical_optimization.ipynb
+main:
+	odin build src/build
+	./build
 
 
 test_notebooks:
@@ -36,13 +15,4 @@ test_interpreter:
 	poetry --directory=./src/python_kernel run pip install pytest
 	make -C ./src/interpreter/ test -B
 	make -C ./src/python_kernel/ test -B
-
-
-# COMPILE THE BUILD SCRIPT #
-build:
-	odin build src/build -out:build.exe
-
-# EXECUTE THE BUILD SCRIPT #
-main:
-	./build.exe
 

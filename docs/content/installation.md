@@ -6,10 +6,11 @@ title = 'Setup'
 
 ## Requirements
 
-- Odin latest version
+- Make installed
+- Odin version nightly+2025-07-24
 - Python version >=3.12
 - Jupyter
-- Python Poetry (for the Python kernel only)
+- Python Poetry
 
 ## Installing
 
@@ -18,18 +19,16 @@ To install JODIN execute:
 ```
 git clone https://github.com/nik1oo/jodin.git
 cd jodin
-./bjodin install
+odin run src/build
 ```
 
 To start the virtual environment execute:
 
 ```
-bjodin venv
+jodin venv
 ```
 
 ## Running
-
-To start the console front-end execute the following command:
 
 To start JODIN with the Jupyter console front-end execute:
 

@@ -33,10 +33,12 @@
     <hr />
     <div id="post-content">
         <h2 id="live-coding">Live Coding</h2>
-<p>Each cell is executed in a separate thread. To prevent data races, the shared resources are guarded by a mutex. This mutex is acquired and released automatically, so you don&rsquo;t have to think about it. In JODIN there are 3 different kinds of cells: <em>regular cell</em>, <em>looping cell</em>, and <em>composite cell</em>. To do live coding, you have to use <em>looping cells</em> or <em>composite cells</em>.</p>
+<p>Cells are executed in separate threads and their shared resources are guarded by a mutex. To make synchronization easier, JODIN allows you to specify how a cell should be executed using special tags and labels. The acquisition and release of the mutex is then done automatically.</p>
+<p>This article describes 3 different kinds of cells which you can construct In JODIN using it&rsquo;s synchronization features: <em>regular cell</em>, <em>looping cell</em>, and <em>composite cell</em>. The <em>regular cell</em> does nothing special, but the <em>looping cell</em> and the <em>composite</em> cell allow you to do live coding.</p>
 <hr>
 <p><img src="../regular-cell.png" alt="regular cell"></p>
 <h3 id="regular-cell">Regular Cell</h3>
+<p>Use the regular cell when you want to execute something once, without allowing other cells to insert themselves in-between.</p>
 <pre tabindex="0"><code>…
 </code></pre><ul>
 <li>The cell&rsquo;s contents are executed once.</li>
@@ -45,6 +47,7 @@
 <hr>
 <p><img src="../looping-cell.png" alt="looping cell"></p>
 <h3 id="looping-cell">Looping Cell</h3>
+<p>Use a looping cell when you want to execute something repeatedly, while allowing other cells to insert themselves in-between iterations. To create a <em>looping cell</em> add the <code>#+loop</code> tag at the top.</p>
 <pre tabindex="0"><code>#+loop
 …
 </code></pre><ul>
@@ -55,8 +58,10 @@
 <hr>
 <p><img src="../composite-cell.png" alt="composite cell"></p>
 <h3 id="composite-cell">Composite Cell</h3>
-<pre tabindex="0"><code>…
-loop: { … }
+<p>Use the composite cell when you want to execute something with a complex control-flow and you want to enable other cells to insert themselves at the bounds of certain scopes. To create a <em>composite cell</em> add an <code>#+comp</code> tag at the top and designate separate critical sections by attaching to them a <code>loop</code> label.</p>
+<pre tabindex="0"><code>#+comp
+…
+__comp__: { … }
 …
 </code></pre><ul>
 <li>The cell&rsquo;s contents are executed once.</li>

@@ -6,13 +6,17 @@ title = 'Guide'
 
 ## Live Coding
 
-Each cell is executed in a separate thread. To prevent data races, the shared resources are guarded by a mutex. This mutex is acquired and released automatically, so you don't have to think about it. In JODIN there are 3 different kinds of cells: _regular cell_, _looping cell_, and _composite cell_. To do live coding, you have to use _looping cells_ or _composite cells_.
+Cells are executed in separate threads and their shared resources are guarded by a mutex. To make synchronization easier, JODIN allows you to specify how a cell should be executed using special tags and labels. The acquisition and release of the mutex is then done automatically.
+
+This article describes 3 different kinds of cells which you can construct In JODIN using it's synchronization features: _regular cell_, _looping cell_, and _composite cell_. The _regular cell_ does nothing special, but the _looping cell_ and the _composite_ cell allow you to do live coding.
 
 ---
 
 ![regular cell](../regular-cell.png)
 
 ### Regular Cell
+
+Use the regular cell when you want to execute something once, without allowing other cells to insert themselves in-between.
 
 ```
 …
@@ -26,6 +30,8 @@ Each cell is executed in a separate thread. To prevent data races, the shared re
 ![looping cell](../looping-cell.png)
 
 ### Looping Cell
+
+Use a looping cell when you want to execute something repeatedly, while allowing other cells to insert themselves in-between iterations. To create a _looping cell_ add the `#+loop` tag at the top.
 
 ```
 #+loop
@@ -42,9 +48,12 @@ Each cell is executed in a separate thread. To prevent data races, the shared re
 
 ### Composite Cell
 
+Use the composite cell when you want to execute something with a complex control-flow and you want to enable other cells to insert themselves at the bounds of certain scopes. To create a _composite cell_ add an `#+comp` tag at the top and designate separate critical sections by attaching to them a `loop` label.
+
 ```
+#+comp
 …
-loop: { … }
+__comp__: { … }
 …
 ```
 
