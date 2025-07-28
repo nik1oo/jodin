@@ -6,15 +6,14 @@ title = 'Setup'
 
 ## Requirements
 
-- Make installed
+- GNU Make
 - Odin version nightly+2025-07-24
-- Python version >=3.12
-- Jupyter
 - Python Poetry
 
-## Installing
+---
+## Installation
 
-To install JODIN execute:
+1. Download and install JODIN:
 
 ```
 git clone https://github.com/nik1oo/jodin.git
@@ -22,24 +21,49 @@ cd jodin
 odin run src/build
 ```
 
-To start the virtual environment execute:
+2. Add to PATH.
+
+---
+## Starting the JODIN interactive shell
+
+To start the JODIN interpreter in REPL mode execute:
+
+```
+jodin shell
+```
+
+To exit the REPL execute `exit()`.
+
+---
+## Staring the Jupyter Notebook
+
+First activate the virtual environment by executing the command printed by the following command:
 
 ```
 jodin venv
 ```
 
-## Running
-
-To start JODIN with the Jupyter console front-end execute:
-
-```
-jodin jupyter-console
-```
-
-To start JODIN with the Jupyter notebook front-end execute:
+Then start the jupyter notebook using the following command:
 
 ```
 jodin jupyter-notebook
 ```
 
-If the JODIN kernel is not selected, you can select it from _Kernel_ > _Change Kernel_.
+Then, if starting for the first time, select the JODIN kernel from _Kernel_ > _Change Kernel_.
+
+---
+## Starting the Jupyter Server
+
+First activate the virtual environment by executing the command printed by the following command:
+
+```
+jodin venv
+```
+
+Then start the jupyter server using the following command:
+
+```
+jodin jupyter-server
+```
+
+Then copy the URL into your preferred Jupyter front-end.

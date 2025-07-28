@@ -4,8 +4,10 @@ JODIN: Interactive/live programming environment for Odin.
 Usage:
 	jodin [subcommand] [options]
 Subcommands:
-	jupyter-console           Start JODIN with the Jupyter console front-end.
-	jupyter-notebook          Start JODIN with the Jupyter notebook front-end.
+	shell                     Start the interactive JODIN shell.
+	jupyter-console           Start the Jupyter console with the JODIN kernel selected.
+	jupyter-notebook          Start the Jupyter notebook.
+	jupyter-server            Start the Jupyter server with the JODIN kernel.
 	server                    Start the JODIN interpreter in server mode, allowing the JODIN kernel to connect to it.
 	venv                      Start the Python virtual environment.
 	help                      Print the help text.

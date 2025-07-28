@@ -43,62 +43,36 @@ when ODIN_OS == .Linux {
 	TEMP_DIRECTORY_MODE: u32 :   os.S_IRWXU | os.S_IRGRP | os.S_IXGRP }
 when ODIN_OS == .Windows {
 	TEMP_DIRECTORY_MODE: u32 :   0 }
+JODIN_LOG_PREFIX::               ANSI_GREEN + "[Jodin] " + ANSI_RESET
 INTERPRETER_LOG_PREFIX::         ANSI_GREEN + "[JodinInterpreter] " + ANSI_RESET
 INTERPRETER_ERROR_PREFIX::       ANSI_RED + "[JodinInterpreter] " + ANSI_RESET
 
 
 main:: proc() {
+	// NOTE vent/Scripts on Windows, venv/bin on Linux. //
+	load_config()
+	notebooks_path: = config.notebooks_path
 	subcommand: string = (len(os.args) == 1) ? "" : (os.args[1][0] == '-') ? "" : os.args[1]
 	working_dir, _: = os2.join_path({os.get_current_directory(), `src`, `python_kernel`}, context.allocator)
-	notebook_dir: string = (ODIN_OS == .Windows) ? "/c" : "/"
+	venv_dir: = get_venv_directory()
 	if len(os.args) > 2 do for arg in os.args[2:] {
 		if strings.starts_with(arg, `-notebook-dir`) {
-			notebook_dir = strings.split(arg, "=")[1] } }
+			notebooks_path = strings.split(arg, "=")[1] } }
 	if subcommand != "" {
 		switch subcommand {
 		case "help":
 			fmt.println(HELP_STRING)
 		case "version":
 			fmt.println("Version", VERSION)
+		case `venv`:
+			activate_path, _: = os2.join_path({venv_dir, "Scripts", "activate"}, context.allocator)
+			fmt.printfln(`source "%s"`, activate_path)
 		case "jupyter-console":
 			libc.system(`poetry --directory=./src/python_kernel run jupyter console  --kernel jodin`)
-			// state, stdout, stderr, err: = os2.process_exec(
-			// 	desc=os2.Process_Desc{
-			// 		command={`poetry`, `env`, `info`, `-p`}, working_dir=working_dir },
-			// 	allocator=context.allocator)
-			// venv_path: = string(stdout)
-			// jupyter_console, _: = os2.join_path({ strings.trim_right(string(venv_path), "\n\r"), "Scripts", "jupyter-console.exe" }, context.allocator)
-			// sep: []u8 = {os2.Path_Separator}
-			// path_list: = strings.split(jupyter_console, string(sep))
-			// fmt.println(path_list)
-			// jupyter_console, _ = strings.join(path_list[2:], string(sep))
-			// fmt.println(jupyter_console)
-			// command: []string = {fmt.aprintf(`"%s"`, jupyter_console), `--kernel jodin`}
-			// fmt.println(strings.join(command, sep=" "))
-			// state, stdout, stderr, err = os2.process_exec(
-			// 	{command=command, working_dir=working_dir},
-			// 	allocator=context.allocator)
-			// state, stdout, stderr, err = os2.process_exec(
-			// 	{command={`poetry`, `run`, `jupyter`, `console`}, working_dir=working_dir},
-			// 	allocator=context.allocator)
-			// fmt.println(string(stdout), string(stderr))
+		case "jupyter-server":
+			libc.system(`poetry --directory=./src/python_kernel run jupyter server  --kernel jodin`)
 		case "jupyter-notebook":
-			// fmt.println(os2.stdout)
-			libc.system(fmt.caprintf(`poetry --directory=./src/python_kernel run jupyter notebook --notebook-dir=%s`, notebook_dir))
-			// process, err: = os2.process_start(
-			// 	{command={`poetry`, `run`, `jupyter`, `notebook`}, working_dir=working_dir, stdout=os2.stdout})
-			// for {
-			// 	process_state, wait_err: = os2.process_wait(process, 1_000_000)
-			// 	p: [100_000]u8
-			// 	n, err: = io.read(os2.stdout.stream, p[:])
-			// 	fmt.println(p[0:n])
-			// 	os2.flush(os2.stdout)
-			// 	if process_state.exited do break }
-			// fmt.println(process, err)
-			// state, stdout, stderr, err: = os2.process_exec(
-			// 	{command={`poetry`, `run`, `jupyter`, `notebook`}, working_dir=working_dir},
-			// 	allocator=context.allocator)
-			// fmt.println(string(stdout), string(stderr))
+			libc.system(fmt.caprintf(`poetry --directory=./src/python_kernel run jupyter notebook --notebook-dir=%s`, notebooks_path))
 		case "server":
 			context.allocator = reporting_allocator.wrap_allocator(
 				wrapped_allocator=context.allocator,
@@ -178,61 +152,63 @@ main:: proc() {
 					external_pipe.DEFAULT_DELAY)
 				assert(err == NOERR)
 				if session.exit do break }
+		case `shell`:
+			fmt.println(
+				INTERPRETER_LOG_PREFIX,
+				"Jodin: ",
+				"Version: ",
+				VERSION,
+				sep = "")
+			session: ^Session = new(Session)
+			start_session(
+				session,
+				error_handler)
+			defer end_session(session)
+			counter: uint = 1
+			for {
+				defer { counter += 1 }
+				response, _: = strings.builder_make_len_cap(
+					0,
+					CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
+				code_builder, _: = strings.builder_make_len_cap(
+					0,
+					10_000)
+				fmt.printf(ANSI_BOLD_GREEN + "In [%d]: " + ANSI_RESET, counter)
+				for {
+					line: []u8 = make(
+						[]u8,
+						1_000)
+					total_read,_: = os.read(
+						os.stdin,
+						line)
+					if total_read == 0 do break
+					line_trimmed: = strings.trim_right(
+						string(line[0:total_read]),
+						"\n\r")
+					fmt.sbprint(
+						&code_builder,
+						line_trimmed)
+					if len(line_trimmed) == 0 do break
+					if line_trimmed[len(line_trimmed)-1] != '\\' do break }
+				cell_stdout, cell_stderr, cell_iopub: string
+				code_raw: = strings.to_string(code_builder)
+				frontend_cell_id: = fmt.aprint(counter)
+				assert(frontend_cell_id not_in session.cells)
+				cell, err: = compile_new_cell(session,
+					frontend_cell_id,
+					code_raw,
+					counter)
+				if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
+				session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
+				session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
+				fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")
+				fmt.sbprintln(&response, ANSI_RED, session_stderr, cell_stderr, ANSI_RESET, sep = "")
+				fmt.println(strings.to_string(response))
+				if session.exit do break }
 		case:
 			fmt.println(
 				INTERPRETER_ERROR_PREFIX + "Invalid subcommand",
 				os.args[1]) } }
 	else {
-		fmt.println(
-			INTERPRETER_LOG_PREFIX,
-			"Jodin: ",
-			"Version: ",
-			VERSION,
-			sep = "")
-		session: ^Session = new(Session)
-		start_session(
-			session,
-			error_handler)
-		defer end_session(session)
-		counter: uint = 1
-		for {
-			defer { counter += 1 }
-			response, _: = strings.builder_make_len_cap(
-				0,
-				CELL_STDERR_PIPE_BUFFER_SIZE + CELL_STDERR_PIPE_BUFFER_SIZE)
-			code_builder, _: = strings.builder_make_len_cap(
-				0,
-				10_000)
-			fmt.printf(ANSI_BOLD_GREEN + "In [%d]: " + ANSI_RESET, counter)
-			for {
-				line: []u8 = make(
-					[]u8,
-					1_000)
-				total_read,_: = os.read(
-					os.stdin,
-					line)
-				if total_read == 0 do break
-				line_trimmed: = strings.trim_right(
-					string(line[0:total_read]),
-					"\n\r")
-				fmt.sbprint(
-					&code_builder,
-					line_trimmed)
-				if len(line_trimmed) == 0 do break
-				if line_trimmed[len(line_trimmed)-1] != '\\' do break }
-			cell_stdout, cell_stderr, cell_iopub: string
-			code_raw: = strings.to_string(code_builder)
-			frontend_cell_id: = fmt.aprint(counter)
-			assert(frontend_cell_id not_in session.cells)
-			cell, err: = compile_new_cell(session,
-				frontend_cell_id,
-				code_raw,
-				counter)
-			if cell.loaded do cell_stdout, cell_stderr, cell_iopub, err = run_cell(cell)
-			session_stdout, _: = internal_pipe.read(&session.stdout_pipe)
-			session_stderr, _: = internal_pipe.read(&session.stderr_pipe)
-			fmt.sbprint(&response, ANSI_RESET, session_stdout, cell_stdout, sep = "")
-			fmt.sbprintln(&response, ANSI_RED, session_stderr, cell_stderr, ANSI_RESET, sep = "")
-			fmt.println(strings.to_string(response))
-			if session.exit do break } } }
+		fmt.println(HELP_STRING) } }
 

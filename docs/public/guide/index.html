@@ -34,8 +34,9 @@
     <div id="post-content">
         <h2 id="live-coding">Live Coding</h2>
 <p>Cells are executed in separate threads and their shared resources are guarded by a mutex. To make synchronization easier, JODIN allows you to specify how a cell should be executed using special tags and labels. The acquisition and release of the mutex is then done automatically.</p>
-<p>This article describes 3 different kinds of cells which you can construct In JODIN using it&rsquo;s synchronization features: <em>regular cell</em>, <em>looping cell</em>, and <em>composite cell</em>. The <em>regular cell</em> does nothing special, but the <em>looping cell</em> and the <em>composite</em> cell allow you to do live coding.</p>
+<p>The next section describes 3 different kinds of cells which you can construct In JODIN using it&rsquo;s synchronization features: <em>regular cell</em>, <em>looping cell</em>, and <em>composite cell</em>. The <em>regular cell</em> does nothing special, but the <em>looping cell</em> and the <em>composite</em> cell allow you to do live coding.</p>
 <hr>
+<h2 id="cell-types">Cell Types</h2>
 <p><img src="../regular-cell.png" alt="regular cell"></p>
 <h3 id="regular-cell">Regular Cell</h3>
 <p>Use the regular cell when you want to execute something once, without allowing other cells to insert themselves in-between.</p>

@@ -106,7 +106,7 @@ class OdinKernel(ipykernel.kernelbase.Kernel):
                 shutil.rmtree(temp_directory)
             except:
                 pass
-        try: subprocess.Popen(self.interpreter_path)
+        try: subprocess.Popen(self.interpreter_path + " server")
         except FileNotFoundError:
             print_and_flush(KERNEL_ERROR_PREFIX + " Could not find interpreter executable " + self.interpreter_path + ".")
             return

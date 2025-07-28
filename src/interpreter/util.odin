@@ -26,12 +26,12 @@ NL::                     "\n"
 NULL::                   "\x00"
 EOT::                    "\x03"
 HASH_SEED::              281091900
-ANSI_RED::               "\e[2;31m"
-ANSI_GREEN::             "\e[2;32m"
-ANSI_YELLOW::            "\e[2;33m"
-ANSI_BLUE::              "\e[2;34m"
-ANSI_PURPLE::            "\e[2;35m"
-ANSI_CYAN::              "\e[2;36m"
+ANSI_RED::               "\e[0;31m" // "\e[2;31m"
+ANSI_GREEN::             "\e[0;32m" // "\e[2;32m"
+ANSI_YELLOW::            "\e[0;33m" // "\e[2;33m"
+ANSI_BLUE::              "\e[0;34m" // "\e[2;34m"
+ANSI_PURPLE::            "\e[0;35m" // "\e[2;35m"
+ANSI_CYAN::              "\e[0;36m" // "\e[2;36m"
 ANSI_UNDERLINED_BLACK::  "\e[4;30m"
 ANSI_UNDERLINED_RED::    "\e[4;31m"
 ANSI_UNDERLINED_GREEN::  "\e[4;32m"
@@ -106,4 +106,15 @@ string_builder_is_corrupt:: proc(sb: strings.Builder) -> bool {
 indent:: proc(str: string) -> string {
 	result, _: = strings.replace(str, "\n", "\n\t", 100)
 	return result }
+
+
+get_venv_directory:: proc() -> string {
+	venv_dir: os.Handle
+	err:      os.Error
+	fi:       []os.File_Info
+	if ! os.exists("./venv") do return ""
+	venv_dir, err = os.open("./venv")
+	fi, err = os.read_dir(venv_dir, 1, context.allocator)
+	if err != nil do return ""
+	return fi[0].fullpath }
 

@@ -34,27 +34,40 @@
     <div id="post-content">
         <h2 id="requirements">Requirements</h2>
 <ul>
-<li>Make installed</li>
-<li>Odin latest version</li>
-<li>Python version &gt;=3.12</li>
-<li>Jupyter</li>
-<li>Python Poetry (for the Python kernel only)</li>
+<li>GNU Make</li>
+<li>Odin version nightly+2025-07-24</li>
+<li>Python Poetry</li>
 </ul>
-<h2 id="installing">Installing</h2>
-<p>To install JODIN execute:</p>
+<hr>
+<h2 id="installation">Installation</h2>
+<ol>
+<li>Download and install JODIN:</li>
+</ol>
 <pre tabindex="0"><code>git clone https://github.com/nik1oo/jodin.git
 cd jodin
-odin build src/build
-./build
-</code></pre><p>To start the virtual environment execute:</p>
+odin run src/build
+</code></pre><ol start="2">
+<li>Add to PATH.</li>
+</ol>
+<hr>
+<h2 id="starting-the-jodin-interactive-shell">Starting the JODIN interactive shell</h2>
+<p>To start the JODIN interpreter in REPL mode execute:</p>
+<pre tabindex="0"><code>jodin shell
+</code></pre><p>To exit the REPL execute <code>exit()</code>.</p>
+<hr>
+<h2 id="staring-the-jupyter-notebook">Staring the Jupyter Notebook</h2>
+<p>First activate the virtual environment by executing the command printed by the following command:</p>
 <pre tabindex="0"><code>jodin venv
-</code></pre><h2 id="running">Running</h2>
-<p>To start the console front-end execute the following command:</p>
-<p>To start JODIN with the Jupyter console front-end execute:</p>
-<pre tabindex="0"><code>jodin jupyter-console
-</code></pre><p>To start JODIN with the Jupyter notebook front-end execute:</p>
+</code></pre><p>Then start the jupyter notebook using the following command:</p>
 <pre tabindex="0"><code>jodin jupyter-notebook
-</code></pre><p>If the JODIN kernel is not selected, you can select it from <em>Kernel</em> &gt; <em>Change Kernel</em>.</p>
+</code></pre><p>Then, if starting for the first time, select the JODIN kernel from <em>Kernel</em> &gt; <em>Change Kernel</em>.</p>
+<hr>
+<h2 id="starting-the-jupyter-server">Starting the Jupyter Server</h2>
+<p>First activate the virtual environment by executing the command printed by the following command:</p>
+<pre tabindex="0"><code>jodin venv
+</code></pre><p>Then start the jupyter server using the following command:</p>
+<pre tabindex="0"><code>jodin jupyter-server
+</code></pre><p>Then copy the URL into your preferred Jupyter front-end.</p>
 
     </div>
 </section>

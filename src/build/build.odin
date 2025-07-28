@@ -49,31 +49,31 @@ main:: proc() {
 	fmt.println(string(stdout), string(stderr))
 	assert(err == nil)
 
-	assert(1 == 2)
+	// assert(1 == 2)
 
-	state, stdout, stderr, err = os2.process_exec(
-		desc=os2.Process_Desc{
-			command={`poetry`, `--directory=./src/python_kernel`, `env`, `activate`},
-			working_dir=current_directory },
-		allocator=context.allocator)
+	// state, stdout, stderr, err = os2.process_exec(
+	// 	desc=os2.Process_Desc{
+	// 		command={`poetry`, `--directory=./src/python_kernel`, `env`, `activate`},
+	// 		working_dir=current_directory },
+	// 	allocator=context.allocator)
 
-	_, venv_path, _, _: = os2.process_exec(
-		desc=os2.Process_Desc{
-			command={`poetry`, `--directory=./src/python_kernel`, `env`, `info`, `-p`},
-			working_dir=current_directory },
-		allocator=context.allocator)
-	fmt.println("venv path:", string(venv_path))
-	python_path: string
-	python_path, err = os2.join_path({ strings.trim_right(string(venv_path), "\n\r"), "Scripts", "Python.exe" }, context.allocator)
-	python_path = fmt.aprintf(`"%s"`, python_path)
-	fmt.println(python_path)
+	// _, venv_path, _, _: = os2.process_exec(
+	// 	desc=os2.Process_Desc{
+	// 		command={`poetry`, `--directory=./src/python_kernel`, `env`, `info`, `-p`},
+	// 		working_dir=current_directory },
+	// 	allocator=context.allocator)
+	// fmt.println("venv path:", string(venv_path))
+	// python_path: string
+	// python_path, err = os2.join_path({ strings.trim_right(string(venv_path), "\n\r"), "Scripts", "Python.exe" }, context.allocator)
+	// python_path = fmt.aprintf(`"%s"`, python_path)
+	// fmt.println(python_path)
 
-	state, stdout, stderr, err = os2.process_exec(
-		desc=os2.Process_Desc{
-			command={python_path, `print("wow")`},
-			working_dir=current_directory },
-		allocator=context.allocator)
-	fmt.println("python version:", state, string(stdout), string(stderr), err)
+	// state, stdout, stderr, err = os2.process_exec(
+	// 	desc=os2.Process_Desc{
+	// 		command={python_path, `print("wow")`},
+	// 		working_dir=current_directory },
+	// 	allocator=context.allocator)
+	// fmt.println("python version:", state, string(stdout), string(stderr), err)
 
 
 

@@ -8,9 +8,11 @@ title = 'Guide'
 
 Cells are executed in separate threads and their shared resources are guarded by a mutex. To make synchronization easier, JODIN allows you to specify how a cell should be executed using special tags and labels. The acquisition and release of the mutex is then done automatically.
 
-This article describes 3 different kinds of cells which you can construct In JODIN using it's synchronization features: _regular cell_, _looping cell_, and _composite cell_. The _regular cell_ does nothing special, but the _looping cell_ and the _composite_ cell allow you to do live coding.
+The next section describes 3 different kinds of cells which you can construct In JODIN using it's synchronization features: _regular cell_, _looping cell_, and _composite cell_. The _regular cell_ does nothing special, but the _looping cell_ and the _composite_ cell allow you to do live coding.
 
 ---
+
+## Cell Types
 
 ![regular cell](../regular-cell.png)
 
