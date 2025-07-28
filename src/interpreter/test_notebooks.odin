@@ -34,6 +34,7 @@ test_notebook:: proc(t: ^testing.T, notebook_name: string) {
 
 	session: ^Session = new(Session)
 	start_session(session, test_error_handler)
+	session.print_source_on_error = true
 	log.info("Started session.")
 	defer end_session(session)
 

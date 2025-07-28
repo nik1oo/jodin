@@ -25,6 +25,10 @@ import "core:thread"
 import "core:container/queue"
 
 
+
+PRINT_HATS:: false
+
+
 Tags :: struct {
 	odin_path:  string,
 	build_args: string,
@@ -37,11 +41,18 @@ node_to_string:: proc(pp: ^Preprocessor, node: ast.Node) -> string {
 	return pp.file.src[node.pos.offset:node.end.offset] }
 
 
+node_to_string_extended:: proc(pp: ^Preprocessor, node: ast.Node) -> string {
+	pre: = (node.pos.offset-8 >= 0) ? pp.file.src[node.pos.offset-8: node.pos.offset] : ""
+	post: = (node.end.offset+8 < len(pp.file.src)) ? pp.file.src[node.end.offset: node.end.offset+8] : ""
+	return fmt.aprint(pre, ANSI_BLUE, pp.file.src[node.pos.offset:node.end.offset], ANSI_RESET, post, sep="") }
+
+
 preprocess_node:: proc(pp: ^Preprocessor, node: ast.Node, async: bool = false) -> (node_string: string) {
 	// TODO Throw error if an external variable is found and the current scope is async. //
 	hat_points: [dynamic]int = make_dynamic_array([dynamic]int)
 	for i in 0..<len(pp.external_variable_nodes) {
 		expr: = pp.external_variable_nodes[i]
+		if PRINT_HATS do fmt.println(ANSI_RED, `^`, ANSI_RESET, node_to_string_extended(pp, expr^), sep="")
 		if in_range(expr.pos.offset, node.pos.offset, node.end.offset) do append(&hat_points, expr.end.offset) }
 	if len(hat_points) == 0 do return pp.file.src[node.pos.offset:node.end.offset]
 	sb: strings.Builder = strings.builder_make_len_cap(0, 1 * mem.Kilobyte)
@@ -111,6 +122,8 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 		if len(decl.values) != 1 do return false
 		proc_lit, ok: = decl.values[0].derived_expr.(^ast.Proc_Lit)
 		return ok }
+	ident_is_field:: proc(pp: ^Preprocessor, node: ^ast.Ident) -> bool {
+		return (node.pos.offset >= 1) ? (pp.file.src[node.pos.offset-1] == '.') : false }
 
 	context = cell.cell_context
 	session: = cell.session
@@ -248,7 +261,7 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
 						break SEARCH2 }
 					if ident.name in visitor_data.shadowed do break
 					if is_externally_declared {
-						append(&visitor_data.pp.external_variable_nodes, node) } }
+						if ! ident_is_field(visitor_data.pp, ident) do append(&visitor_data.pp.external_variable_nodes, node) } }
 						// if EVI_expr_is_valid(pp, node) do append(&pp.external_variable_nodes, node)
 						// else do pp.err = session.error_handler(General_Error.Preprocessor_Error, "References to external variables in `#+async` cells are only allowed inside scopes labeled by `sync:`.") } }
 			return v },
@@ -303,8 +316,15 @@ preprocess_cell:: proc(cell: ^Cell) -> (err: Error) {
       					case ^ast.Struct_Type:
 							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
       							break PREPROCESS_VALUE_DECL
+						case ^ast.Proc_Group: // HACK
+							// TODO Append to cell.global_procedures instead. //
+							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
+      							break PREPROCESS_VALUE_DECL
+      					case ^ast.Distinct_Type:
+							fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))
+      							break PREPROCESS_VALUE_DECL
 						case:
-							return session.error_handler(General_Error.Preprocessor_Error, "Unhandled immutable value declaration %s of type $v.", preprocess_node(&pp, decl.values[0]), value) }
+							return session.error_handler(General_Error.Preprocessor_Error, "Unhandled immutable value declaration %s of type %v.", preprocess_node(&pp, decl.values[0]), value) }
 					fmt.sbprintln(&global_constant_stmts, preprocess_node(&pp, decl))       }
 
 				// MUTABLE //

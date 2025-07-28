@@ -237,11 +237,6 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 	context = cell.cell_context
 	session: = cell.session
 
-	if session.print_source_on_error do defer {
-		if err != NOERR {
-			print_cell_content(cell)
-			print_cell_code(cell) } }
-
 	// WRITE DLL //
 	if os.exists(cell.source_filepath) do os.remove(cell.source_filepath)
 	err = os.write_entire_file_or_err(cell.source_filepath, transmute([]u8)cell.code)
@@ -286,13 +281,17 @@ compile_cell:: proc(cell: ^Cell) -> (err: Error) {
 
 compile_new_cell:: proc(session: ^Session, frontend_cell_id: string, code_raw: string, index: uint = 0) -> (cell: ^Cell, err: Error) {
 	cell = new(Cell)
-	err = init_cell(cell, session, frontend_cell_id, code_raw, index); if err != NOERR do return cell, err
-	context = cell.cell_context
-	err = preprocess_cell(cell); if err != NOERR do return cell, err
-	err = compile_cell(cell); if err != NOERR do return cell, err
-	// fmt.println(cell.code)
-	session.cells[frontend_cell_id] = cell
-	return cell, NOERR }
+	lol: {
+		err = init_cell(cell, session, frontend_cell_id, code_raw, index); if err != NOERR do break lol
+		context = cell.cell_context
+		err = preprocess_cell(cell); if err != NOERR do break lol
+		err = compile_cell(cell); if err != NOERR do break lol
+		session.cells[frontend_cell_id] = cell
+	}
+	if session.print_source_on_error do if err != NOERR {
+		print_cell_content(cell)
+		print_cell_code(cell) }
+	return cell, err }
 
 
 recompile_cell:: proc(session: ^Session, frontend_cell_id, code_raw: string) -> (cell: ^Cell, err: Error) {
@@ -307,13 +306,15 @@ recompile_cell:: proc(session: ^Session, frontend_cell_id, code_raw: string) -> 
 
 
 print_cell_content:: proc(cell: ^Cell) {
-	fmt.eprintln(ANSI_BOLD_BLUE, "[CellContent]----------------------------------------", sep="")
-	fmt.eprintln(cell.code_raw)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET, sep="") }
+	fmt.printfln("Cell %s content:", cell.name)
+	fmt.print(ANSI_BOLD_PURPLE)
+	fmt.println(cell.code_raw)
+	fmt.print(ANSI_RESET) }
 
 
 print_cell_code:: proc(cell: ^Cell) {
-	fmt.eprintln(ANSI_BOLD_BLUE, "[CellSource]-----------------------------------------", sep="")
-	fmt.eprintln(cell.code)
-	fmt.eprintln("-----------------------------------------------------", ANSI_RESET, sep="") }
+	fmt.printfln("Cell %s source:", cell.name)
+	fmt.print(ANSI_BOLD_BLUE)
+	fmt.println(cell.code)
+	fmt.print(ANSI_RESET) }
 
